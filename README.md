@@ -1,4 +1,4 @@
-<p align="center"> <img alt="Space Station 15" width="880" height="300" src="https://raw.githubusercontent.com/Execyte/space-station15/refs/heads/main/.github/svg/SS15longBGP.svg?token=GHSAT0AAAAAAC2QPWPRPG5LKM3UYPEHEQCWZ6TUROQ" /></p>
+<p align="center"> <img alt="Space Station 15" width="880" height="300" src="https://raw.githubusercontent.com/Execyte/asset-dump/refs/heads/main/svg/SS15longBGP.svg" /></p>
 
 Space Station 15 is a remake of SS13 in haskell which adds it's own gimmicks to the game. SS15 tries to keep the original tgstation style including it's tile based movement.
 
