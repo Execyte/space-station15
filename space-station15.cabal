@@ -47,15 +47,11 @@ library
 executable space-station15-client
   main-is: Main.hs
   other-modules:
-      Server.World
-      Shared.Components.Position
       Paths_space_station15
   autogen-modules:
       Paths_space_station15
   hs-source-dirs:
       app/server
-      src/server
-      src/shared
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -XTypeFamilies -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
@@ -74,14 +70,11 @@ executable space-station15-client
 executable space-station15-server
   main-is: Main.hs
   other-modules:
-      Shared.Components.Position
       Paths_space_station15
   autogen-modules:
       Paths_space_station15
   hs-source-dirs:
       app/client
-      src/client
-      src/shared
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -XTypeFamilies -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
