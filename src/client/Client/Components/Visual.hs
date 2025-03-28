@@ -10,9 +10,10 @@ import qualified SDL
 import Linear (V4 (..), V2 (..))
 
 data Sprite = Sprite { path :: T.Text
-  , position :: V2 Double
+  , position :: V2 Double -- this is just an offset from the Position component in x and y only.
   , orientation :: V2 Double
   , color :: V4 Double
+  , layer :: Int
   }
   deriving (Show, Eq)
 

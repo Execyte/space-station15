@@ -8,12 +8,14 @@ import Apecs
 -- we can keep everything fresh and pixel-based basically
 -- but at the same time collision code will still check for rounded values unless it's a projectile
 
--- interpolation defined at Shared.Components.Animation
+-- interpolation defined at Shared.Components.Animation (TODO)
 
-newtype Position = Position (V2 Double) deriving Show
+-- V3 because z layers.
+
+newtype Position = Position (V3 Double) deriving Show
 instance Component Position where type Storage Position = Map Position
 
-newtype Velocity = Velocity (V2 Double) deriving Show
+newtype Velocity = Velocity (V3 Double) deriving Show
 instance Component Velocity where type Storage Velocity = Map Velocity
 
 data Collidable = Collidable deriving Show
