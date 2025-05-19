@@ -43,7 +43,25 @@ library
       src/shared
   default-extensions:
       TypeFamilies
+      TypeFamilyDependencies
+      BangPatterns
+      KindSignatures
+      TypeOperators
       DataKinds
+      QuasiQuotes
+      InstanceSigs
+      EmptyCase
+      LambdaCase
+      MultiWayIf
+      NamedFieldPuns
+      TupleSections
+      DeriveFoldable
+      DeriveFunctor
+      DeriveGeneric
+      DeriveLift
+      DeriveTraversable
+      DerivingStrategies
+      StandaloneDeriving
       FlexibleContexts
       FlexibleInstances
       MultiParamTypeClasses
@@ -51,6 +69,14 @@ library
       TemplateHaskell
       TypeApplications
       GeneralizedNewtypeDeriving
+      OverloadedStrings
+      ConstraintKinds
+      RankNTypes
+      DefaultSignatures
+      PatternSynonyms
+      ExistentialQuantification
+      FunctionalDependencies
+      GADTs
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       OpenAL
@@ -81,7 +107,25 @@ executable space-station15-client
       src/client
   default-extensions:
       TypeFamilies
+      TypeFamilyDependencies
+      BangPatterns
+      KindSignatures
+      TypeOperators
       DataKinds
+      QuasiQuotes
+      InstanceSigs
+      EmptyCase
+      LambdaCase
+      MultiWayIf
+      NamedFieldPuns
+      TupleSections
+      DeriveFoldable
+      DeriveFunctor
+      DeriveGeneric
+      DeriveLift
+      DeriveTraversable
+      DerivingStrategies
+      StandaloneDeriving
       FlexibleContexts
       FlexibleInstances
       MultiParamTypeClasses
@@ -89,6 +133,14 @@ executable space-station15-client
       TemplateHaskell
       TypeApplications
       GeneralizedNewtypeDeriving
+      OverloadedStrings
+      ConstraintKinds
+      RankNTypes
+      DefaultSignatures
+      PatternSynonyms
+      ExistentialQuantification
+      FunctionalDependencies
+      GADTs
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       OpenAL
@@ -120,7 +172,25 @@ executable space-station15-server
       src/server
   default-extensions:
       TypeFamilies
+      TypeFamilyDependencies
+      BangPatterns
+      KindSignatures
+      TypeOperators
       DataKinds
+      QuasiQuotes
+      InstanceSigs
+      EmptyCase
+      LambdaCase
+      MultiWayIf
+      NamedFieldPuns
+      TupleSections
+      DeriveFoldable
+      DeriveFunctor
+      DeriveGeneric
+      DeriveLift
+      DeriveTraversable
+      DerivingStrategies
+      StandaloneDeriving
       FlexibleContexts
       FlexibleInstances
       MultiParamTypeClasses
@@ -128,6 +198,14 @@ executable space-station15-server
       TemplateHaskell
       TypeApplications
       GeneralizedNewtypeDeriving
+      OverloadedStrings
+      ConstraintKinds
+      RankNTypes
+      DefaultSignatures
+      PatternSynonyms
+      ExistentialQuantification
+      FunctionalDependencies
+      GADTs
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       OpenAL
