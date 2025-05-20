@@ -67,6 +67,9 @@ default-extensions:
 - LambdaCase
 - MultiWayIf
 - NamedFieldPuns
+- DisambiguateRecordFields
+- DuplicateRecordFields
+- RecordWildCards
 - TupleSections
 - DeriveFoldable
 - DeriveFunctor
