@@ -24,6 +24,8 @@ import DearImGui.OpenGL3
 
 import Client.Renderer (Renderer(..))
 import qualified Client.Renderer as Renderer
+import Client.Renderer.Shader (Shader(..))
+import qualified Client.Renderer.Shader as Shader
 
 m44ToGL :: M44 Float -> IO (GL.GLmatrix GL.GLfloat)
 m44ToGL m = GL.newMatrix GL.ColumnMajor [
@@ -82,9 +84,10 @@ createShader id type' source = do
   GL.compileShader shader
 
   success <- GL.get $ GL.compileStatus shader
+  
   unless success $ do
     hPutStrLn stderr ("funny error in shader " ++ show id)
-    hPutStrLn stderr =<< GL.get (GL.shaderInfoLog shader)
+    hPutStrLn stderr =<< GL.shaderInfoLog shader
     exitFailure
   
   return shader
@@ -164,20 +167,19 @@ main = do
 
   GL.clearColor $= GL.Color4 0 0 0 0
 
-  vertexShader <- createShader 1 GL.VertexShader vertexSource
-  fragmentShader <- createShader 2 GL.FragmentShader fragmentSource
+  maybeShader <- Shader.fromByteStrings [
+    (GL.VertexShader, vertexSource),
+    (GL.FragmentShader, fragmentSource)
+    ]
 
-  program <- GL.createProgram
-  GL.attachShader program vertexShader
-  GL.attachShader program fragmentShader
-  GL.attribLocation program "location" $= GL.AttribLocation 0
-  GL.linkProgram program
-  GL.validateProgram program
-  linked <- GL.get $ GL.linkStatus program
-  valid <- GL.get $ GL.validateStatus program
-  unless (linked && valid) $ do
-    hPutStrLn stderr "stupid program error!!!"
-    exitFailure
+  shader <- case maybeShader of
+    (Nothing, logs) -> do
+      hPutStrLn stderr "THE SHADERS THEY'RE ON FIREEEEEEEEEEEEE!!!!!!!!!!!!!!!"
+      hPutStrLn stderr logs
+      exitFailure
+    (Just shader, _) -> return shader
+  
+  let program = Shader.program shader
 
   texture <- GL.genObjectName
   GL.activeTexture $= GL.TextureUnit 0

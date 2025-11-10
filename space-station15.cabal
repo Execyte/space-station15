@@ -57,14 +57,13 @@ library
       JuicyPixels
     , OpenAL
     , OpenGL
-    , OpenGLRaw
+    , StateVar
     , aeson
     , apecs
     , base >=4.7 && <5
     , bytestring
     , containers
     , dear-imgui
-    , hslua
     , lens
     , linear
     , network
@@ -102,14 +101,13 @@ executable space-station15-client
       JuicyPixels
     , OpenAL
     , OpenGL
-    , OpenGLRaw
+    , StateVar
     , aeson
     , apecs
     , base >=4.7 && <5
     , bytestring
     , containers
     , dear-imgui
-    , hslua
     , lens
     , linear
     , network
@@ -148,14 +146,13 @@ executable space-station15-editor
       JuicyPixels
     , OpenAL
     , OpenGL
-    , OpenGLRaw
+    , StateVar
     , aeson
     , apecs
     , base >=4.7 && <5
     , bytestring
     , containers
     , dear-imgui
-    , hslua
     , lens
     , linear
     , network
@@ -192,14 +189,13 @@ executable space-station15-server
       JuicyPixels
     , OpenAL
     , OpenGL
-    , OpenGLRaw
+    , StateVar
     , aeson
     , apecs
     , base >=4.7 && <5
     , bytestring
     , containers
     , dear-imgui
-    , hslua
     , lens
     , linear
     , network

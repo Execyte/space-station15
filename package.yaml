@@ -28,14 +28,13 @@ dependencies:
 - apecs
 - linear
 - containers
-- hslua
 - network
 - aeson
 - text
 - random
 - OpenAL
 - OpenGL
-- OpenGLRaw
+- StateVar
 - dear-imgui
 - JuicyPixels
 
