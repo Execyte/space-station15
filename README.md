@@ -1,8 +1,8 @@
-<p align="center"> <img alt="Space Station 15" width="880" height="300" src="https://raw.githubusercontent.com/Execyte/asset-dump/refs/heads/main/svg/SS15longBGP.svg" /></p>
+<p align="center"> <img alt="Space Station 15" width="880" height="300" src="https://raw.githubusercontent.com/Execyte/asset-dump/refs/heads/main/svg/SS15longBGP.svg"/></p>
 
 [![Join our Discord server](https://img.shields.io/badge/join_our-Discord_server-5865F2?logo=discord&logoColor=white)](https://discord.gg/qW8bHkncrb) [![Powered by Haskell](https://img.shields.io/badge/powered_by-Haskell-5D4F85?logo=haskell&logoColor=white)](https://haskell.org)
 
-Space station 15 is a reiteration of Space Station 13 focusing on very different gameplay. Each job has extensibility, replayability and will always remain "believable and realistic".
+Space Station 15 is a reiteration of Space Station 13 focusing on very different gameplay. Each job has extensibility, replayability and will always remain "believable and realistic".
 
 # Building
 ## Prerequisites
@@ -54,12 +54,12 @@ macOS building works similarly to Linux, please refer to stack docs for further 
     ```
 
 # Hoogle
-1. To build hoogle, run:
+1. To build Hoogle, run:
 ```
 stack hoogle -- generate --local
 ```
 
-2. To run the hoogle server, run:
+2. To run the Hoogle server, run:
 ```
 stack hoogle -- server --local --port=8080
 ```
