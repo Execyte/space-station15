@@ -40,7 +40,7 @@ dependencies:
 
 library:
   source-dirs:
-  - src/lib
+  - assets
   - src/shared
 
 ghc-options:

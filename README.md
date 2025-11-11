@@ -2,7 +2,7 @@
 
 [![Join our Discord server](https://img.shields.io/badge/join_our-Discord_server-5865F2?logo=discord&logoColor=white)](https://discord.gg/qW8bHkncrb) [![Powered by Haskell](https://img.shields.io/badge/powered_by-Haskell-5D4F85?logo=haskell&logoColor=white)](https://haskell.org)
 
-Space Station 15 is a remake of Space Station 13 built from scratch in Haskell, which adds its own gimmicks to the game while staying true to the original's style and design.
+Space station 15 is a reiteration of Space Station 13 focusing on very different gameplay. Each job has extensibility, replayability and will always remain "believable and realistic".
 
 # Building
 ## Prerequisites

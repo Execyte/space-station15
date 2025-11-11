@@ -161,9 +161,10 @@ main = do
   SDL.initialize [SDL.InitVideo]
 
   window <- SDL.createWindow "Space Station 15" SDL.defaultWindow {
-    SDL.windowInitialSize = V2 640 480,
     SDL.windowGraphicsContext = SDL.OpenGLContext SDL.defaultOpenGL
   }
+  -- sponge pls fix this - Execute
+  --SDL.setWindowIcon window "assets/ss15_icon.png"
   gl <- SDL.glCreateContext window
   SDL.showWindow window
 
@@ -200,7 +201,7 @@ main = do
 
   GL.textureFilter GL.Texture2D $= ((GL.Linear', Nothing), GL.Linear')
 
-  dynImage <- readImage "station15.png"
+  dynImage <- readImage "assets/ss15_full_title.png"
   case dynImage of
     Left e -> do
       hPutStrLn stderr e

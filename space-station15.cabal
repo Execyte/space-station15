@@ -1,6 +1,6 @@
 cabal-version: 2.2
 
--- This file has been generated from package.yaml by hpack version 0.37.0.
+-- This file has been generated from package.yaml by hpack version 0.38.1.
 --
 -- see: https://github.com/sol/hpack
 
@@ -25,20 +25,16 @@ source-repository head
 
 library
   exposed-modules:
-      Comms
+      Components
       Direction
+      Event
       Intent
-      Material
-      Shared.Components.Atmos
-      Shared.Components.Damage
-      Shared.Components.Movement
-      Shared.Components.Physics
-      Shared.Components.Tiles
   other-modules:
-      src/server
-      src/client
+      Paths_space_station15
+  autogen-modules:
+      Paths_space_station15
   hs-source-dirs:
-      src/lib
+      assets
       src/shared
   default-extensions:
       TypeFamilies
@@ -103,7 +99,7 @@ library
 executable space-station15-client
   main-is: Main.hs
   other-modules:
-      Client.Components.Visual
+      Client.Game
       Client.Renderer
       Client.Renderer.Shader
       Paths_space_station15
@@ -176,7 +172,7 @@ executable space-station15-client
 executable space-station15-editor
   main-is: Main.hs
   other-modules:
-      Client.Components.Visual
+      Client.Game
       Client.Renderer
       Client.Renderer.Shader
       Paths_space_station15
