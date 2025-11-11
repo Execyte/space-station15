@@ -1,30 +1,26 @@
 module Main (main) where
 
 import Control.Monad (when, unless)
-import System.IO
 import System.Exit
+import System.IO
 import Data.ByteString (ByteString)
-import qualified Data.ByteString as ByteString
 import Data.Vector.Storable (Vector)
 import qualified Data.Vector.Storable as Vector
-import Foreign.Marshal.Utils
 import Foreign.Ptr
-import Foreign.C
 
 import Linear
 import Codec.Picture
-import qualified SDL
-import qualified Graphics.Rendering.OpenGL.GL as GL
-import Graphics.Rendering.OpenGL (($=))
+import Data.StateVar
 import qualified DearImGui as Im
+import DearImGui.OpenGL3
 import qualified DearImGui.Raw.IO as ImIO
 import DearImGui.SDL
 import DearImGui.SDL.OpenGL
-import DearImGui.OpenGL3
+import qualified Graphics.Rendering.OpenGL.GL as GL
+import qualified SDL
 
 import Client.Renderer (Renderer(..))
 import qualified Client.Renderer as Renderer
-import Client.Renderer.Shader (Shader(..))
 import qualified Client.Renderer.Shader as Shader
 
 m44ToGL :: M44 Float -> IO (GL.GLmatrix GL.GLfloat)
@@ -77,21 +73,6 @@ fragmentSource = "#version 330 core\n\
   \    gl_FragColor = texture(u_texture, frag_uv) * frag_color;\n\
   \}\0"
 
-createShader :: Int -> GL.ShaderType -> ByteString -> IO GL.Shader
-createShader id type' source = do
-  shader <- GL.createShader type'
-  GL.shaderSourceBS shader $= source
-  GL.compileShader shader
-
-  success <- GL.get $ GL.compileStatus shader
-  
-  unless success $ do
-    hPutStrLn stderr ("funny error in shader " ++ show id)
-    hPutStrLn stderr =<< GL.shaderInfoLog shader
-    exitFailure
-  
-  return shader
-
 loop :: Renderer -> IO ()
 loop renderer = do
   let
@@ -101,19 +82,19 @@ loop renderer = do
   events <- pollEventsWithImGui
   let quit = SDL.QuitEvent `elem` map SDL.eventPayload events
 
-  -- openGL3NewFrame
-  -- sdl2NewFrame
-  -- Im.newFrame
+  openGL3NewFrame
+  sdl2NewFrame
+  Im.newFrame
 
-  -- Im.withMainMenuBarOpen $ do
-  --   Im.withMenuOpen "File" $ do
-  --     Im.menuItem "New map..." >>= \clicked ->
-  --       when clicked $ putStrLn "unimplemented"
-  --     Im.menuItem "Open" >>= \clicked ->
-  --       when clicked $ putStrLn "unimplemented"
+  Im.withMainMenuBarOpen $ do
+    Im.withMenuOpen "File" $ do
+      Im.menuItem "New map..." >>= \clicked ->
+        when clicked $ putStrLn "unimplemented"
+      Im.menuItem "Open" >>= \clicked ->
+        when clicked $ putStrLn "unimplemented"
 
-  -- Im.withWindowOpen "the space station 15" $ do
-  --   Im.text "the space station 15 is real"
+  Im.withWindowOpen "the space station 15" $ do
+    Im.text "the space station 15 is real"
 
   GL.clear [GL.ColorBuffer]
 
@@ -133,8 +114,8 @@ loop renderer = do
   GL.vertexAttribArray (GL.AttribLocation 1) $= GL.Disabled
   GL.vertexAttribArray (GL.AttribLocation 2) $= GL.Disabled
 
-  -- Im.render
-  -- openGL3RenderDrawData =<< Im.getDrawData
+  Im.render
+  openGL3RenderDrawData =<< Im.getDrawData
 
   SDL.glSwapWindow window
 
@@ -204,12 +185,12 @@ main = do
 
   GL.currentProgram $= Just program
 
-  uniform <- GL.get $ GL.uniformLocation program "u_texture"
+  uniform <- GL.uniformLocation program "u_texture"
   GL.uniform uniform $= GL.TextureUnit 0
 
   projection <- m44ToGL $ ortho 0 640 480 0 (-1) 1
 
-  uniform <- GL.get $ GL.uniformLocation program "u_projection"
+  uniform <- GL.uniformLocation program "u_projection"
   GL.uniform uniform $= projection
 
   GL.currentProgram $= Nothing

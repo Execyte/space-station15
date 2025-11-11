@@ -46,3 +46,28 @@ fromByteStrings shaders = attach shaders =<< GL.createProgram
       logs <- GL.programInfoLog program
 
       return (if linked && valid then Just $ Shader program else Nothing, logs)
+
+fromFiles :: [(GL.ShaderType, FilePath)] -> IO (Maybe Shader, String)
+fromFiles shaders = attach shaders =<< GL.createProgram
+  where
+    attach ((type', file):shaders) program = do
+      code <- ByteString.readFile file
+
+      (maybeShader, logs) <- createShader type' code
+
+      case maybeShader of
+        Just shader -> do
+          GL.attachShader program shader
+          GL.deleteObjectName shader
+          attach shaders program
+        Nothing -> do
+          return (Nothing, logs)
+    attach [] program = do
+      GL.linkProgram program
+      GL.validateProgram program
+
+      linked <- GL.linkStatus program
+      valid <- GL.validateStatus program
+      logs <- GL.programInfoLog program
+
+      return (if linked && valid then Just $ Shader program else Nothing, logs)
