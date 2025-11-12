@@ -77,6 +77,9 @@ loop renderer = do
   sdl2NewFrame
   Im.newFrame
 
+  Im.showDemoWindow
+  Im.showMetricsWindow
+
   Im.withWindowOpen "the space station 15" $ do
     Im.text "the space station 15 is real"
 
