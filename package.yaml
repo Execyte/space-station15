@@ -36,6 +36,7 @@ dependencies:
 - OpenGL
 - StateVar
 - dear-imgui
+- unliftio
 - JuicyPixels
 
 library:

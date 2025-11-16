@@ -1,7 +1,8 @@
 module Main (main) where
 
-import Data.Maybe
 import Control.Monad (unless)
+import Data.Bits
+import Data.Maybe
 import System.Exit
 import System.IO
 import Data.ByteString (ByteString)
@@ -25,10 +26,12 @@ import qualified Direction
 import Intent (Intent)
 import qualified Intent
 import Client.Renderer (Renderer(..))
+import qualified ImUtils
 import qualified Client.Renderer as Renderer
 import qualified Client.Renderer.Shader as Shader
+import Apecs (liftIO)
 
-vertices :: Vector Float 
+vertices :: Vector Float
 vertices = Vector.fromList [
   0, 0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0,
   400, 0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0,
@@ -84,6 +87,24 @@ loop renderer = do
 
   Im.withWindowOpen "the space station 15" $ do
     Im.text "the space station 15 is real"
+
+  let
+    flags =
+          Im.ImGuiWindowFlags_NoMove
+      .|. Im.ImGuiWindowFlags_NoDecoration
+      .|. Im.ImGuiWindowFlags_NoResize
+      .|. Im.ImGuiWindowFlags_NoBackground
+
+  let position = makeGettableStateVar . pure $ Im.ImVec2 10 10
+  _ <- Im.setNextWindowPos position Im.ImGuiCond_Always Nothing
+
+  let padding = makeGettableStateVar . pure $ Im.ImVec2 0 0
+  Im.pushStyleVar Im.ImGuiStyleVar_WindowPadding padding
+
+  ImUtils.withWindowOpenFlags "overlay" flags $ do
+    Im.text "TODO: use this overlay for something"
+
+  Im.popStyleVar 1
 
   GL.clear [GL.ColorBuffer]
 
