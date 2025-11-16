@@ -1,6 +1,6 @@
 module Main (main) where
 
-import Control.Monad (unless)
+import Control.Monad (foldM_, unless, when)
 import Data.Bits
 import Data.Maybe
 import System.Exit
@@ -30,13 +30,28 @@ import qualified ImUtils
 import qualified Client.Renderer as Renderer
 import qualified Client.Renderer.Shader as Shader
 
-vertices :: Vector Float
-vertices = Vector.fromList [
-  0, 0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0,
-  1, 0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0,
-  0, 1, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0,
-  1, 1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0
+-- TODO: implement tile layers
+type Tile = Int
+
+tiles :: [[Tile]]
+tiles = [
+  [0, 1, 0, 1, 0, 1, 0, 1],
+  [1, 0, 1, 0, 1, 0, 1, 0],
+  [0, 1, 0, 1, 0, 1, 0, 1],
+  [1, 0, 1, 0, 1, 0, 1, 0],
+  [0, 1, 0, 1, 0, 1, 0, 1],
+  [1, 0, 1, 0, 1, 0, 1, 0],
+  [0, 1, 0, 1, 0, 1, 0, 1],
+  [1, 0, 1, 0, 1, 0, 1, 0]
   ]
+
+-- vertices :: Vector Float
+-- vertices = Vector.fromList [
+--   0, 0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0,
+--   1, 0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0,
+--   0, 1, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+--   1, 1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0
+--   ]
 
 indices :: Vector Word32
 indices = Vector.fromList [0, 1, 2, 1, 2, 3]
@@ -64,6 +79,37 @@ eventsToIntents = mapMaybe (payloadToIntent . SDL.eventPayload)
     payloadToIntent (SDL.KeyboardEvent k)       = intentFromKey k
     payloadToIntent SDL.QuitEvent               = Just Intent.Quit
     payloadToIntent _                           = Nothing
+
+drawTiles :: Renderer -> [[Tile]] -> IO ()
+drawTiles renderer =
+  foldM_ (\y row -> do
+    foldM_ (\x tile -> do
+      when (tile > 0) $ drawTile x y
+      pure $ succ x
+      ) 0 row
+    pure $ succ y
+    ) 0
+  where
+    makeVertices :: Int -> Int -> Vector Float
+    makeVertices x y = Vector.fromList [
+      fx, fy, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0,
+      fx + 1, fy, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0,
+      fx, fy + 1, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+      fx + 1, fy + 1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0
+      ]
+      where
+        (fx, fy) = (fromIntegral x, fromIntegral y)
+    drawTile x y = do
+      let vertices = makeVertices x y
+
+      let
+        floatSize = sizeOf (undefined :: Float)
+        verticesSize = fromIntegral $ floatSize * Vector.length vertices
+      
+      Vector.unsafeWith vertices $ \ptr ->
+        GL.bufferData GL.ArrayBuffer $= (verticesSize, ptr, GL.DynamicDraw)
+
+      GL.drawElements GL.Triangles 6 GL.UnsignedInt nullPtr
 
 loop :: Renderer -> IO ()
 loop renderer = do
@@ -109,7 +155,7 @@ loop renderer = do
 
   GL.currentProgram $= Just shader
   GL.bindVertexArrayObject $= Just vertexArray
-  GL.drawElements GL.Triangles 6 GL.UnsignedInt nullPtr
+  drawTiles renderer tiles
   GL.bindVertexArrayObject $= Nothing
 
   Im.render
@@ -128,16 +174,16 @@ main = do
     SDL.windowResizable = True,
     SDL.windowGraphicsContext = SDL.OpenGLContext SDL.defaultOpenGL
   }
-  
+
   image <- Renderer.loadImage "assets/ss15_icon.png"
-  
+
   let
     width = fromIntegral (imageWidth image)
     height = fromIntegral (imageHeight image)
     pixels = imageData image
 
   icon <- SDL.createRGBSurface (V2 width height) SDL.ABGR8888
-  
+
   SDL.lockSurface icon
   destination <- SDL.surfacePixels icon
   Vector.unsafeWith pixels $ \ptr ->
@@ -159,7 +205,7 @@ main = do
 
   GL.blend $= GL.Enabled
   GL.blendFunc $= (GL.SrcAlpha, GL.OneMinusSrcAlpha)
-  
+
   GL.clearColor $= GL.Color4 0 0 0 0
 
   maybeShader <- Shader.fromFiles [
@@ -186,8 +232,8 @@ main = do
     width = fromIntegral (imageWidth image)
     height = fromIntegral (imageHeight image)
     pixels = imageData image
-  
-  Vector.unsafeWith pixels $ \ptr -> do
+
+  Vector.unsafeWith pixels $ \ptr ->
     GL.texImage2D
       GL.Texture2D
       GL.NoProxy 0
@@ -195,7 +241,7 @@ main = do
       (GL.TextureSize2D width height)
       0
       $ GL.PixelData GL.RGBA GL.UnsignedByte ptr
-  
+
   Shader.setUniform shader "u_texture" (GL.TextureUnit 0)
 
   model <- Renderer.m44ToGL $ identity * V4 32 32 1 1
@@ -213,13 +259,9 @@ main = do
   let
     floatSize = sizeOf (undefined :: Float)
     intSize = sizeOf (undefined :: Int)
-    verticesSize = fromIntegral $ floatSize * Vector.length vertices
     indicesSize = fromIntegral $ intSize * Vector.length indices
-
-  GL.bindBuffer GL.ArrayBuffer $= Just vertexBuffer
-  Vector.unsafeWith vertices $ \ptr -> do
-    GL.bufferData GL.ArrayBuffer $= (verticesSize, ptr, GL.StaticDraw)
   
+  GL.bindBuffer GL.ArrayBuffer $= Just vertexBuffer
   GL.bindBuffer GL.ElementArrayBuffer $= Just elementBuffer
   Vector.unsafeWith indices $ \ptr -> do
     GL.bufferData GL.ElementArrayBuffer $= (indicesSize, ptr, GL.StaticDraw)
