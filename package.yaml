@@ -29,6 +29,7 @@ dependencies:
 - linear
 - containers
 - network
+- network-udp
 - aeson
 - text
 - random
@@ -37,6 +38,8 @@ dependencies:
 - StateVar
 - dear-imgui
 - unliftio
+- stm
+- extra
 - JuicyPixels
 
 library:

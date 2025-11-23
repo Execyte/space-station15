@@ -87,11 +87,14 @@ library
     , bytestring
     , containers
     , dear-imgui
+    , extra
     , lens
     , linear
     , network
+    , network-udp
     , random
     , sdl2
+    , stm
     , text
     , unliftio
     , vector
@@ -101,10 +104,11 @@ executable space-station15-client
   main-is: Main.hs
   other-modules:
       Client.Game
-      Client.ImUtils
+      Client.ImGui
       Client.RectPack
       Client.Renderer
       Client.Renderer.Shader
+      Client.UI.ConnectMenu
       Paths_space_station15
   autogen-modules:
       Paths_space_station15
@@ -162,12 +166,15 @@ executable space-station15-client
     , bytestring
     , containers
     , dear-imgui
+    , extra
     , lens
     , linear
     , network
+    , network-udp
     , random
     , sdl2
     , space-station15
+    , stm
     , text
     , unliftio
     , vector
@@ -177,10 +184,11 @@ executable space-station15-editor
   main-is: Main.hs
   other-modules:
       Client.Game
-      Client.ImUtils
+      Client.ImGui
       Client.RectPack
       Client.Renderer
       Client.Renderer.Shader
+      Client.UI.ConnectMenu
       Paths_space_station15
   autogen-modules:
       Paths_space_station15
@@ -238,12 +246,15 @@ executable space-station15-editor
     , bytestring
     , containers
     , dear-imgui
+    , extra
     , lens
     , linear
     , network
+    , network-udp
     , random
     , sdl2
     , space-station15
+    , stm
     , text
     , unliftio
     , vector
@@ -310,12 +321,15 @@ executable space-station15-server
     , bytestring
     , containers
     , dear-imgui
+    , extra
     , lens
     , linear
     , network
+    , network-udp
     , random
     , sdl2
     , space-station15
+    , stm
     , text
     , unliftio
     , vector

@@ -32,6 +32,20 @@ packages:
       size: 5882
   original:
     hackage: dear-imgui-2.4.0
+- completed:
+    hackage: network-udp-0.0.0@sha256:408d2d4fa1a25e49e95752ee124cca641993404bb133ae10fb81daef22d876ae,1075
+    pantry-tree:
+      sha256: ee19a66c9d420861c5cc1dfad3210e2a53cdc6088ff3dd90b44f7961f5caebee
+      size: 284
+  original:
+    hackage: network-udp-0.0.0
+- completed:
+    hackage: stm-2.5.3.1@sha256:421b57c9cdf55b4977e9445336be3895ba0c8d92b6ec6e474f140e173270d9dd,2443
+    pantry-tree:
+      sha256: bf5b63fd751f2aab774df1d76d1a2298c1203b4c7be4f66bae47669e026bfbe9
+      size: 1392
+  original:
+    hackage: stm-2.5.3.1
 snapshots:
 - completed:
     sha256: ecb944087cba3b8e85ff75d279bbb878615127e44d1b0485c511834c56ee6929
