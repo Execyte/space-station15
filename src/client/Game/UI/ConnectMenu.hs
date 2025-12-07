@@ -39,8 +39,8 @@ newConnectMenu :: STM ConnectMenu
 newConnectMenu = ConnectMenu <$> newTVar "127.0.0.1" <*> newTVar "" <*> newTVar ""
 
 drawConnectMenu :: Client -> ConnectMenu -> IO ()
-drawConnectMenu client@Client{connStatus=connStatus_, world} ConnectMenu{username, password, server_ip} = do
-  connStatus <- readTVarIO connStatus_
+drawConnectMenu client ConnectMenu{server_ip, username, password} = do
+  connStatus <- readTVarIO client.connStatus
   case connStatus of
     Connected _ -> pure ()
     _           -> Im.withWindowOpen "connect to server" case connStatus of
@@ -63,7 +63,7 @@ drawConnectMenu client@Client{connStatus=connStatus_, world} ConnectMenu{usernam
           Im.setNextItemWidth 150
           void $ Im.inputText "##toconnect_password" password 128
 
-          whenM (Im.button "connect") $ connectHandler server_ip username password world connStatus_
+          whenM (Im.button "connect") $ connectHandler server_ip username password client.world client.connStatus
 
           Im.text str
           pure ()
