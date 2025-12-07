@@ -15,9 +15,11 @@ import Control.Exception(try, SomeException(..))
 
 import Network.Message
 import Network.Client qualified as Client
-import Network.ConnectionStatus
+import Network.Client.ConnectionStatus
 
 import Apecs
+
+import Linear
 
 import Game.Client
 import Game.Client.World
@@ -36,10 +38,9 @@ data ConnectMenu = ConnectMenu
 newConnectMenu :: STM ConnectMenu
 newConnectMenu = ConnectMenu <$> newTVar "127.0.0.1" <*> newTVar "" <*> newTVar ""
 
--- TODO: split this into functions PLEASE
-drawConnectMenu :: TMVar World -> TVar (ConnectionStatus Message Message) -> ConnectMenu -> IO ()
-drawConnectMenu worldTMVar connInfo ConnectMenu{username, password, server_ip} = do
-  connStatus <- readTVarIO connInfo
+drawConnectMenu :: Client -> ConnectMenu -> IO ()
+drawConnectMenu client@Client{connStatus=connStatus_, world} ConnectMenu{username, password, server_ip} = do
+  connStatus <- readTVarIO connStatus_
   case connStatus of
     Connected _ -> pure ()
     _           -> Im.withWindowOpen "connect to server" case connStatus of
@@ -62,85 +63,63 @@ drawConnectMenu worldTMVar connInfo ConnectMenu{username, password, server_ip} =
           Im.setNextItemWidth 150
           void $ Im.inputText "##toconnect_password" password 128
 
-          whenM (Im.button "connect") do
-            hostname <- readTVarIO server_ip
-            name <- readTVarIO username
-            pass <- readTVarIO password
+          whenM (Im.button "connect") $ connectHandler server_ip username password world connStatus_
 
-            atomically $ writeTVar connInfo Connecting
-            void $ forkIO $ timeout 5000000 (Client.startClient (unpack hostname) "2525") >>= \case
-              Just (stop_, call, cast, pollEvent) -> do
-                let
-                  stop = do
-                    void $ atomically $ tryTakeTMVar worldTMVar
-                    stop_
-
-                let
-                  stopManual = do
-                    stop_
-                    atomically $ writeTVar connInfo $ Disconnected "manually disconnected from the server"
-                atomically $ writeTVar connInfo $ Connected (stopManual, call, cast, pollEvent)
-
+          Im.text str
+          pure ()
+            where
+              tryLogin name pass world connStatus = do
+                (Connected (_, call, _, _)) <- readTVarIO connStatus
                 void $ call (TryLogin name pass) >>= \case
                   (LoginSuccess e) -> do
                     putStrLn $ "YAY! LOGIN SUCCESS! MY ENTITY NUMBER IS " <> (show e)
-                    world <- initGame
-                    runWith world $ newEntity (Client, NetEntity e)
-                    atomically $ writeTMVar worldTMVar world
+                    world' <- initGame
+                    void $ runWith world' $ newEntity (Me, Position (V2 0 0), NetEntity e)
+                    atomically $ writeTMVar world world'
                   LoginFail -> do
-                    atomically $ writeTVar connInfo $ Disconnected "server reported login fail"
+                    atomically $ writeTVar connStatus $ Disconnected "server reported login fail"
                     error "disconnect"
 
+              pingLoop connStatus = do
+                (Connected (stop, call, _, _)) <- readTVarIO connStatus
                 void $ forkIO $ forever do
                   threadDelay 2000000
                   timeout 1000000 (try $ call Ping) >>= \case
                     Just (Right Pong) -> pure ()
                     Just (Left (SomeException e)) -> do
-                      atomically $ writeTVar connInfo $ Disconnected (pack $ show e)
                       stop
+                      atomically $ writeTVar connStatus $ Disconnected (pack $ show e)
                       error "exception occured"
                     Nothing -> do
-                      atomically $ writeTVar connInfo $ Disconnected "disconnected"
                       stop
+                      atomically $ writeTVar connStatus $ Disconnected "disconnected"
                       error "disconnected"
-              Nothing -> atomically $ writeTVar connInfo $ Disconnected "no response from server within 5s"
 
-          {-
-          whenM (Im.button "connect") do
-            hostname <- readTVarIO server_ip
-            name <- readTVarIO username
-            pass <- readTVarIO password
+              tryStartClient hostname port f = do
+                void $ forkIO $ timeout 5000000 (Client.startClient hostname "2525") >>= \case
+                  Just (stop, call, cast, pollEvent) -> f $ Connected (stop, call, cast, pollEvent)
+                  Nothing -> f $ Disconnected "no response from server"
 
-            atomically $ writeTVar connInfo Connecting
-            void $ forkIO $ timeout 5000000 (startClientSimple (unpack hostname) "2525") >>=
-                \case
-                  Just (stop, call) -> do
-                    Ok _ <- call Hello
+              connectHandler server_ip username password world connStatus = do
+                hostname <- readTVarIO server_ip
+                name <- readTVarIO username
+                pass <- readTVarIO password
+                tryStartClient (unpack hostname) "2525" \case
+                  Connected (stop_, call, cast, pollEvent) -> do
+                    let
+                      stop = do
+                        void $ atomically $ tryTakeTMVar world
+                        stop_
 
-                    atomically $ writeTVar connInfo $
-                      let
-                        stopClient = do
-                          atomically $ writeTVar connInfo $ Disconnected "manually disconnected from the server"
-                          stop
-                       in Connected (stopClient, call)
+                      stopManual = do
+                        stop
+                        atomically $ writeTVar connStatus $ Disconnected "manually disconnected from the server"
+                    atomically $ writeTVar connStatus $ Connected (stopManual, call, cast, pollEvent)
 
-                    void $ forkIO $ forever do
-                      threadDelay 2000000
-                      timeout 1000000 (try $ call Ping) >>= \case
-                        Just (Right Pong) -> pure ()
-                        Just (Left (SomeException e)) -> do
-                          atomically $ writeTVar connInfo $ Disconnected (pack $ show e)
-                          stop
-                          error "exception occured"
-                        Nothing -> do
-                          atomically $ writeTVar connInfo $ Disconnected "disconnected"
-                          stop
-                          error "disconnected"
-                  Nothing -> atomically $ writeTVar connInfo $ Disconnected "unable to establish connection"
-          -}
+                    tryLogin name pass world connStatus
+                    pingLoop connStatus
+                  Disconnected str -> atomically $ writeTVar connStatus $ Disconnected str
 
-          Im.text str
-          pure ()
         Connecting -> do
           hostname <- readTVarIO server_ip
           Im.text $ pack ("Connecting to " ++ (unpack hostname))

@@ -1,4 +1,4 @@
-module Game.Client (runGame, runDraw, initGame, step, draw) where
+module Game.Client (Client(..), runGame, runDraw, initGame, step, draw) where
 
 import SDL qualified
 import Apecs
@@ -6,6 +6,25 @@ import Linear
 
 import Game
 import Game.Client.World
+import Game.Client.Renderer(Renderer)
+
+import Network.Message
+import Network.Client.ConnectionStatus
+
+import Control.Concurrent.STM.TVar
+import Control.Concurrent.STM.TMVar
+
+import Data.IntMap.Strict(IntMap)
+
+import Graphics.Rendering.OpenGL qualified as GL
+
+data Client = Client
+  { world :: TMVar World
+  , textureMaps :: TVar [GL.TextureObject]
+  , sprites :: TVar (IntMap (Int, V4 Int))
+  , connStatus :: TVar (ConnectionStatus Message Message)
+  , renderer :: Renderer
+  }
 
 initGame :: IO World
 initGame = do

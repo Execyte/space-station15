@@ -1,6 +1,6 @@
 module Main (main) where
 
-import Control.Monad (foldM_, unless, when)
+import Control.Monad
 import Control.Concurrent
 import Control.Concurrent.STM 
 import Control.Concurrent.STM.TVar
@@ -13,12 +13,14 @@ import Data.ByteString (ByteString)
 import Data.ByteString qualified as ByteString
 import Data.Vector.Storable (Vector)
 import Data.Vector.Storable qualified as Vector
+import Data.IntMap.Strict qualified as IntMap
 import Data.StateVar
+import Data.Foldable
 
 import System.Exit
 import System.IO
 
-import Foreign
+import Foreign hiding (void)
 
 import Linear
 
@@ -35,10 +37,11 @@ import SDL qualified
 import DearImGui.SDL.OpenGL
 import Graphics.Rendering.OpenGL.GL qualified as GL
 
-import Network.ConnectionStatus
 import Network.Message
+import Network.Client.ConnectionStatus
 
-import Game
+import Game.Intent
+import Game.Direction
 import Game.UI.ConnectMenu
 import Game.Client
 import Game.Client.World
@@ -69,9 +72,14 @@ tiles = [
 indices :: Vector Word32
 indices = Vector.fromList [0, 1, 2, 1, 2, 3]
 
-action :: Intent -> IO ()
-action Quit = exitSuccess
-action _ = pure ()
+action :: Client -> Intent -> IO ()
+action Client{connStatus} Quit = exitSuccess
+action Client{connStatus} x = do
+  status <- readTVarIO connStatus
+  case status of
+    Connected (_, _, event, _) -> event (Action x)
+    _ -> pure ()
+action _ _ = pure ()
 
 intentFromKey :: SDL.KeyboardEventData -> Maybe Intent
 intentFromKey (SDL.KeyboardEventData _ SDL.Released _ _) = Nothing
@@ -126,27 +134,16 @@ drawTiles renderer =
 
 renderGame :: World -> Renderer -> IO ()
 renderGame world renderer = do
-  let
-    shader = Renderer.shader renderer
-    vertexArray = Renderer.vertexArray renderer
-
-  GL.clear [GL.ColorBuffer]
-
-  GL.currentProgram $= Just shader
-  GL.bindVertexArrayObject $= Just vertexArray
   runDraw world
   drawTiles renderer tiles
-  GL.bindVertexArrayObject $= Nothing
 
-loop :: TMVar World -> Renderer -> IO () -> IO ()
-loop worldTMVar renderer buildUI = do
+loop :: Client -> IO () -> IO ()
+loop client@Client{world, renderer, sprites, textureMaps} buildUI = forever do
   let
     window = Renderer.window renderer
 
   events <- pollEventsWithImGui
   let intents = eventsToIntents events
-
-  let quit = Quit `elem` intents
 
   openGL3NewFrame
   sdl2NewFrame
@@ -171,17 +168,26 @@ loop worldTMVar renderer buildUI = do
     Im.text "TODO: use this overlay for something"
 
   Im.popStyleVar 1
+
+  let
+    shader = Renderer.shader renderer
+    vertexArray = Renderer.vertexArray renderer
+
+  GL.clear [GL.ColorBuffer]
+
+  GL.currentProgram $= Just shader
+  GL.bindVertexArrayObject $= Just vertexArray
  
-  (atomically $ tryReadTMVar worldTMVar) >>= \case
-    Just world -> renderGame world renderer
+  (atomically $ tryReadTMVar world) >>= \case
+    Just world' -> renderGame world' renderer
     Nothing -> pure ()
+  GL.bindVertexArrayObject $= Nothing
 
   Im.render
   openGL3RenderDrawData =<< Im.getDrawData
 
   SDL.glSwapWindow window
-
-  unless quit $ loop worldTMVar renderer buildUI
+  forM_ intents (action client)
 
 main = do
   SDL.initialize [SDL.InitVideo]
@@ -296,12 +302,6 @@ main = do
 
   GL.bindVertexArrayObject $= Nothing
 
-  worldTMVar <- newEmptyTMVarIO
-  connInfo <- newTVarIO $ Disconnected ""
-
-  connectMenu <- atomically $ newConnectMenu
-  let drawUI = drawConnectMenu worldTMVar connInfo connectMenu
-
   let renderer = Renderer {
     Renderer.window = window,
     Renderer.shader = shader,
@@ -310,11 +310,27 @@ main = do
     Renderer.vertexArray = vertexArray
   }
 
+  worldTMVar <- newEmptyTMVarIO
+  textureMaps <- newTVarIO []
+  sprites <- newTVarIO $ IntMap.empty
+  connInfo <- newTVarIO $ Disconnected ""
+
+  let client = Client {
+    world = worldTMVar,
+    connStatus = connInfo,
+    renderer = renderer,
+    textureMaps = textureMaps,
+    sprites = sprites
+  }
+
+  connectMenu <- atomically $ newConnectMenu
+  let drawUI = drawConnectMenu client connectMenu
+
   void $ forkIO do
     world <- atomically $ readTMVar worldTMVar
     runGame (1/60) world
 
-  loop worldTMVar renderer drawUI
+  loop client drawUI
 
   openGL3Shutdown
   sdl2Shutdown

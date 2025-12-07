@@ -29,7 +29,6 @@ library
       Game.Components
       Game.Direction
       Game.Intent
-      Network.ConnectionStatus
       Network.Message
   other-modules:
       Paths_space_station15
@@ -53,6 +52,7 @@ library
       NamedFieldPuns
       DisambiguateRecordFields
       DuplicateRecordFields
+      OverloadedRecordDot
       RecordWildCards
       TupleSections
       DeriveFoldable
@@ -124,6 +124,7 @@ executable space-station15-client
       Game.UI.ConnectMenu
       Im
       Network.Client
+      Network.Client.ConnectionStatus
       Paths_space_station15
   autogen-modules:
       Paths_space_station15
@@ -145,6 +146,7 @@ executable space-station15-client
       NamedFieldPuns
       DisambiguateRecordFields
       DuplicateRecordFields
+      OverloadedRecordDot
       RecordWildCards
       TupleSections
       DeriveFoldable
@@ -209,7 +211,9 @@ executable space-station15-client
 executable space-station15-server
   main-is: Main.hs
   other-modules:
+      Game.Server
       Game.Server.Simulation
+      Network.Server.ConnectionStatus
       Paths_space_station15
   autogen-modules:
       Paths_space_station15
@@ -231,6 +235,7 @@ executable space-station15-server
       NamedFieldPuns
       DisambiguateRecordFields
       DuplicateRecordFields
+      OverloadedRecordDot
       RecordWildCards
       TupleSections
       DeriveFoldable

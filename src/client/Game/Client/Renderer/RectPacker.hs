@@ -9,18 +9,12 @@ module Game.Client.Renderer.RectPacker (
 import Data.List
 import Data.Ord (Down(Down))
 
-data Packer = Packer {
-  px, py :: Int,
-  pw, ph :: Int,
-  lh :: Int
-}
+data Packer = Packer { px, py, pw, ph, lh :: Int }
+
+data Rect = Rect { x, y, w, h :: Int } deriving Show
 
 mkPacker :: Int -> Int -> Packer
 mkPacker w h = Packer 0 0 w h 0
-
-data Rect = Rect {
-  x, y, w, h :: Int
-} deriving Show
 
 packRect :: Packer -> Rect -> (Packer, Rect)
 packRect packer rect =

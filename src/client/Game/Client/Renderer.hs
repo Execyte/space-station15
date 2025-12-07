@@ -17,13 +17,13 @@ import Linear
 
 import Game.Client.Renderer.Shader (Shader)
 
-data Renderer = Renderer {
-  window :: SDL.Window,
-  shader :: Shader,
-  texture :: GL.TextureObject,
-  vertexBuffer :: GL.BufferObject,
-  vertexArray :: GL.VertexArrayObject
-}
+data Renderer = Renderer
+  { window :: SDL.Window
+  , shader :: Shader
+  , texture :: GL.TextureObject
+  , vertexBuffer :: GL.BufferObject
+  , vertexArray :: GL.VertexArrayObject
+  }
 
 m44ToGL :: M44 Float -> IO (GL.GLmatrix GL.GLfloat)
 m44ToGL m = GL.newMatrix GL.ColumnMajor [

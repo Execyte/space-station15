@@ -13,6 +13,7 @@ data Intent =
     Quit
   | Wait
   | Move Direction
-  deriving (Eq, Show, Generic)
+  deriving (Eq, Show)
+  deriving Generic
 
 instance Serialise Intent
