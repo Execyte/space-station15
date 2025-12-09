@@ -14,7 +14,8 @@ import Control.Monad.Extra(whenM)
 import Control.Exception(try, SomeException(..))
 
 import Network.Message
-import Network.Client qualified as Client
+import Network.Client
+import Network.Client.Manager
 import Network.Client.ConnectionStatus
 
 import Apecs
@@ -96,9 +97,13 @@ drawConnectMenu client ConnectMenu{server_ip, username, password} = do
                       error "disconnected"
 
               tryStartClient hostname port f = do
-                void $ forkIO $ timeout 5000000 (Client.startClient hostname "2525") >>= \case
+                void $ forkIO $ timeout 5000000 (startClient hostname "2525") >>= \case
                   Just (stop, call, cast, pollEvent) -> f $ Connected (stop, call, cast, pollEvent)
                   Nothing -> f $ Disconnected "no response from server"
+                  
+              processEvents pollEvent = forkIO $ forever do
+                event <- pollEvent
+                processEvent client event
 
               connectHandler server_ip username password world connStatus = do
                 hostname <- readTVarIO server_ip
@@ -118,6 +123,7 @@ drawConnectMenu client ConnectMenu{server_ip, username, password} = do
 
                     tryLogin name pass world connStatus
                     pingLoop connStatus
+                    void $ processEvents pollEvent
                   Disconnected str -> atomically $ writeTVar connStatus $ Disconnected str
 
         Connecting -> do

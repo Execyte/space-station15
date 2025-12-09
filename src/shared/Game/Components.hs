@@ -1,6 +1,6 @@
 module Game.Components(
   ServerEntity, ClientEntity,
-  Camera(..), Me(..), NetEntity(..), Player(..), Position(..),
+  Camera(..), Me(..), NetEntity(..), Player(..), Position(..), Dirty(..)
 ) where
 
 import GHC.Generics(Generic)
@@ -14,6 +14,10 @@ import Data.Semigroup
 import Data.Monoid
 import Data.Text(Text)
 
+import Codec.Serialise(Serialise)
+
+import GHC.Generics(Generic)
+
 import Linear
 
 type ServerEntity = Entity
@@ -26,6 +30,7 @@ data Me = Me deriving Show
 instance Component Me where
   type Storage Me = Unique Me
 
+instance Serialise (V2 Float)
 newtype Camera = Camera (V2 Float) deriving Show
 instance Component Camera where
   type Storage Camera = Global Camera
@@ -37,9 +42,12 @@ newtype NetEntity = NetEntity ServerEntityId
 instance Component NetEntity where
   type Storage NetEntity = Reactive (EnumMap NetEntity) (Map NetEntity)
 
-newtype Position = Position (V2 Int) deriving Show
+newtype Position = Position (V2 Float)
+  deriving (Show, Eq)
+  deriving Generic
 instance Component Position where
   type Storage Position = Map Position
+instance Serialise Position
 
 newtype Player = Player Text
   deriving Show
@@ -47,3 +55,7 @@ newtype Player = Player Text
 instance Component Player where
   type Storage Player = Map Player
 instance Serialise Player
+
+data Dirty = Dirty deriving Show
+instance Component Dirty where
+  type Storage Dirty = Map Dirty

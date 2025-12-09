@@ -8,7 +8,5 @@ import Data.Map(Map)
 import Apecs(Entity)
 
 data Server = Server
-  { players :: TVar (Map Text Entity)
-  , logins :: TVar (Map Int Text)
-  , world :: World
+  { world :: TVar World
   }
