@@ -18,6 +18,9 @@ import Data.IntMap.Strict(IntMap)
 
 import Graphics.Rendering.OpenGL qualified as GL
 
+-- | The client datatype. This stores pretty much everything relevant to the client, especially the world and connection status.
+-- 
+-- TODO: move textureMaps, sprites and renderer out of this datatype. It is bloating it completely and well, most things don't even require those fields.
 data Client = Client
   { world :: TMVar World
   , textureMaps :: TVar [GL.TextureObject]
@@ -26,20 +29,24 @@ data Client = Client
   , renderer :: Renderer
   }
 
+-- | Initialize the world and run the initialization function.
 initGame :: IO World
 initGame = do
   world <- initWorld
   runWith world initialise
   pure world
 
-initialise :: System' ()
-initialise = set global $ Camera (V2 0.0 0.0)
-
+-- | Step the world once. Here is where you should be putting most of the systems.
 step :: Float -> System' ()
 step dT = pure ()
 
+-- | Draw the world to the screen.
 draw :: System' ()
 draw = pure ()
+
+-- | Main function to set globals and other things when the world needs to be initialized.
+initialise :: System' ()
+initialise = set global $ Camera (V2 0.0 0.0)
 
 runDraw :: World -> IO ()
 runDraw world = runWith world draw

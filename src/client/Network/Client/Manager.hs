@@ -16,6 +16,7 @@ import Data.IORef (newIORef, atomicModifyIORef')
 
 import Codec.Serialise(Serialise)
 
+-- | Start the process of connecting to the server, setting up the appropriate queues and managing events/replies from the server.
 startClient :: (Serialise q, Serialise r)
             => HostName
             -> String

@@ -1,4 +1,10 @@
-module Network.Message(ClientMessage(..), ServerMessage(..), Message(..)) where
+module Network.Message(
+  -- * Envelopes
+  ClientMessage(..),
+  ServerMessage(..),
+
+  -- * Payload
+  Message(..)) where
 
 import Data.Text(Text)
 import Codec.Serialise(Serialise)
@@ -8,6 +14,7 @@ import Network.Snapshot
 
 type ServerEntity = Int
 
+-- | These are the payloads that the server and client pass around.
 data Message =
     Ping | Pong
   | TryLogin Text Text | LoginSuccess ServerEntity | LoginFail

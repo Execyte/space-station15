@@ -1,8 +1,5 @@
 {-|
-
-This module is just here to re-export some important datatypes used in Game.
-
-|-}
+This module is just here to re-export some important datatypes used in Game.-}
 module Game(
   module Game.Direction,
   module Game.Intent,

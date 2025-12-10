@@ -33,7 +33,7 @@ Also beware, this project is community closed. Some minor background checks have
 3. To build, run:
 
     ```
-    stack haddock --haddock-docs
+    stack build
     ```
     
     This will produce two executables: `space-station15-client` and `space-station15-server`. Run them with the command:
@@ -50,7 +50,7 @@ macOS building works similarly to Linux, please refer to stack docs for further 
 2. To build, run:
     
     ```
-    stack haddock --haddock-docs
+    stack build
     ```
     
     This will produce two executables: `space-station15-client` and `space-station15-server`. Run them with the command:
@@ -68,4 +68,10 @@ stack hoogle -- generate --local
 2. To run the Hoogle server, run:
 ```
 stack hoogle -- server --local --port=8080
+```
+
+# Haddock
+To auto-generate documentation for the game, you can use the following command (which will also build the game):
+```
+stack haddock --haddock-executables
 ```
