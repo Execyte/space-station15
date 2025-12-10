@@ -30,6 +30,7 @@ dependencies:
 - async
 - serialise
 - containers
+- unordered-containers
 - crypton
 - hourglass
 - memory

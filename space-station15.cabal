@@ -30,6 +30,7 @@ library
       Game.Direction
       Game.Intent
       Network.Message
+      Network.Snapshot
   other-modules:
       Paths_space_station15
   autogen-modules:
@@ -109,6 +110,7 @@ library
     , text
     , tls
     , unliftio
+    , unordered-containers
     , vector
     , x509
   default-language: Haskell2010
@@ -125,6 +127,7 @@ executable space-station15-client
       Im
       Network.Client
       Network.Client.ConnectionStatus
+      Network.Client.Manager
       Paths_space_station15
   autogen-modules:
       Paths_space_station15
@@ -204,6 +207,7 @@ executable space-station15-client
     , text
     , tls
     , unliftio
+    , unordered-containers
     , vector
     , x509
   default-language: Haskell2010
@@ -213,6 +217,7 @@ executable space-station15-server
   other-modules:
       Game.Server
       Game.Server.Simulation
+      Network.Server
       Network.Server.ConnectionStatus
       Paths_space_station15
   autogen-modules:
@@ -293,6 +298,7 @@ executable space-station15-server
     , text
     , tls
     , unliftio
+    , unordered-containers
     , vector
     , x509
   default-language: Haskell2010

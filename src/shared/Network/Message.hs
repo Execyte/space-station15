@@ -4,13 +4,15 @@ import Data.Text(Text)
 import Codec.Serialise(Serialise)
 import GHC.Generics(Generic)
 import Game.Intent(Intent)
+import Network.Snapshot
 
-type ServerToClientEntity = Int
+type ServerEntity = Int
 
 data Message =
     Ping | Pong
-  | TryLogin Text Text | LoginSuccess ServerToClientEntity | LoginFail
+  | TryLogin Text Text | LoginSuccess ServerEntity | LoginFail
   | Action Intent
+  | ComponentSnapshotPacket ServerEntity ComponentSnapshot
   deriving Show
   deriving Generic
 
