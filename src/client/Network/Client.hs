@@ -15,6 +15,8 @@ import Game
 import Game.Client
 import Game.Client.World(withNetEntity)
 
+-- | Here is where you process random data that the server sends to you.
+-- The main cases here are component and world snapshots.
 processEvent :: Client -> Message -> IO ()
 processEvent client (ComponentSnapshotPacket id snapshot) =
   (atomically $ tryReadTMVar client.world) >>= \case

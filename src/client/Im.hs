@@ -1,7 +1,9 @@
+-- | Imgui utilities module. Import as `import Im qualified`.
 module Im (
   beginFlags,
   withWindowFlags,
   withWindowOpenFlags,
+
   module DearImGui
 ) where
 

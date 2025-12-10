@@ -20,6 +20,7 @@ makeWorld "World" [''Player, ''Position, ''Dirty]
 
 type System' a = System World a
 
+-- | The act function is where the player's intents will be processed.
 act :: Entity -> Intent -> System' ()
 act ent (Move DOWN) = modify ent \(Position (V2 x y)) -> (Position $ V2 x (y - 1), Dirty)
 act ent (Move UP) = modify ent \(Position (V2 x y)) -> (Position $ V2 x (y + 1), Dirty)
@@ -27,9 +28,11 @@ act ent (Move LEFT) = modify ent \(Position (V2 x y)) -> (Position $ V2 (x - 1) 
 act ent (Move RIGHT) = modify ent \(Position (V2 x y)) -> (Position $ V2 (x + 1) y, Dirty)
 act _ _ = pure ()
 
+-- | Step the world once.
 step :: Float -> System' ()
 step dT = pure ()
 
+-- | This is what handles sending component snapshots and whatnot to the player.
 networkSystem :: ServerNetworkInfo -> System' ()
 networkSystem netinfo = do
   dirties <- collect \(Dirty, Entity ent) -> Just ent
