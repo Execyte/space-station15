@@ -37,11 +37,8 @@ glSizeOf t = case t of
 
 data VertexAttrib = VertexAttrib Int Int GL.DataType
 
--- NOTE: this requires AllowAmbiguousTypes to work, which might be a bad choice but it is required
--- if we want to use type applications
--- it hurts me to enable AllowAmbiguousTypes but monkey brain want nice syntax
 class Storable a => VertexAttribs a where
-  vertexAttribs :: [VertexAttrib]
+  vertexAttribs :: a -> [VertexAttrib]
 
 data Vertex = Vertex (V2 Float) (V2 Float) (V4 Float)
 
@@ -66,7 +63,7 @@ instance Storable Vertex where
     <*> peekByteOff ptr (sizeOf (undefined :: V4 Float))
 
 instance VertexAttribs Vertex where
-  vertexAttribs = [
+  vertexAttribs _ = [
       VertexAttrib 0 2 GL.Float
     , VertexAttrib 1 2 GL.Float
     , VertexAttrib 2 4 GL.Float
@@ -80,12 +77,12 @@ data Renderer = Renderer
   , rendererVertexArray :: GL.VertexArrayObject
   }
 
-setVertexAttribs :: forall a. VertexAttribs a => GL.VertexArrayObject -> IO ()
-setVertexAttribs vertexArray = do
+setVertexAttribs :: forall a. VertexAttribs a => a -> GL.VertexArrayObject -> IO ()
+setVertexAttribs _ vertexArray = do
   vertexArray' <- get GL.bindVertexArrayObject
   GL.bindVertexArrayObject $= Just vertexArray
 
-  let attribs = vertexAttribs @a
+  let attribs = vertexAttribs @a undefined
 
   foldlM setVertexAttrib nullPtr attribs
 

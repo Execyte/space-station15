@@ -80,7 +80,6 @@ library
       BlockArguments
       ImportQualifiedPost
       GADTs
-      AllowAmbiguousTypes
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       JuicyPixels
@@ -177,7 +176,6 @@ executable space-station15-client
       BlockArguments
       ImportQualifiedPost
       GADTs
-      AllowAmbiguousTypes
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       JuicyPixels
@@ -269,7 +267,6 @@ executable space-station15-server
       BlockArguments
       ImportQualifiedPost
       GADTs
-      AllowAmbiguousTypes
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       JuicyPixels

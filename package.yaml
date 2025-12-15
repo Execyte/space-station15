@@ -110,7 +110,6 @@ default-extensions:
 - BlockArguments
 - ImportQualifiedPost
 - GADTs
-- AllowAmbiguousTypes
 
 executables:
   space-station15-client:

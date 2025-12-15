@@ -119,8 +119,6 @@ drawTiles renderer =
         vertexSize = sizeOf (undefined :: Vertex)
         verticesSize = fromIntegral $ vertexSize * Vector.length vertices
       
-      print (vertexSize, verticesSize)
-      
       Vector.unsafeWith vertices $ \ptr ->
         GL.bufferData GL.ArrayBuffer $= (verticesSize, ptr, GL.DynamicDraw)
 
@@ -294,7 +292,7 @@ main = do
   -- GL.vertexAttribArray (GL.AttribLocation 1) $= GL.Enabled
   -- GL.vertexAttribArray (GL.AttribLocation 2) $= GL.Enabled
 
-  Renderer.setVertexAttribs @Vertex vertexArray
+  Renderer.setVertexAttribs @Vertex undefined vertexArray
 
   GL.bindVertexArrayObject $= Nothing
 
