@@ -275,7 +275,7 @@ main = do
   GL.bindVertexArrayObject $= Just vertexArray
 
   let
-    floatSize = sizeOf (undefined :: Float)
+    -- floatSize = sizeOf (undefined :: Float)
     intSize = sizeOf (undefined :: Int)
     indicesSize = fromIntegral $ intSize * Vector.length indices
   
@@ -284,15 +284,17 @@ main = do
   Vector.unsafeWith indices $ \ptr -> do
     GL.bufferData GL.ElementArrayBuffer $= (indicesSize, ptr, GL.StaticDraw)
 
-  GL.vertexAttribPointer (GL.AttribLocation 0) $=
-    (GL.ToFloat, GL.VertexArrayDescriptor 2 GL.Float 32 nullPtr)
-  GL.vertexAttribPointer (GL.AttribLocation 1) $=
-    (GL.ToFloat, GL.VertexArrayDescriptor 2 GL.Float 32 $ plusPtr nullPtr $ floatSize * 2)
-  GL.vertexAttribPointer (GL.AttribLocation 2) $=
-    (GL.ToFloat, GL.VertexArrayDescriptor 4 GL.Float 32 $ plusPtr nullPtr $ floatSize * 4)
-  GL.vertexAttribArray (GL.AttribLocation 0) $= GL.Enabled
-  GL.vertexAttribArray (GL.AttribLocation 1) $= GL.Enabled
-  GL.vertexAttribArray (GL.AttribLocation 2) $= GL.Enabled
+  -- GL.vertexAttribPointer (GL.AttribLocation 0) $=
+  --   (GL.ToFloat, GL.VertexArrayDescriptor 2 GL.Float 32 nullPtr)
+  -- GL.vertexAttribPointer (GL.AttribLocation 1) $=
+  --   (GL.ToFloat, GL.VertexArrayDescriptor 2 GL.Float 32 $ plusPtr nullPtr $ floatSize * 2)
+  -- GL.vertexAttribPointer (GL.AttribLocation 2) $=
+  --   (GL.ToFloat, GL.VertexArrayDescriptor 4 GL.Float 32 $ plusPtr nullPtr $ floatSize * 4)
+  -- GL.vertexAttribArray (GL.AttribLocation 0) $= GL.Enabled
+  -- GL.vertexAttribArray (GL.AttribLocation 1) $= GL.Enabled
+  -- GL.vertexAttribArray (GL.AttribLocation 2) $= GL.Enabled
+
+  Renderer.setVertexAttribs @Vertex vertexArray
 
   GL.bindVertexArrayObject $= Nothing
 
