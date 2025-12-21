@@ -274,17 +274,19 @@ main = do
 
   -- Renderer.setUniform shader "u_texture" (GL.TextureUnit 0)
 
+  -- please don't make me do this haskell
+  renderer'' <- Renderer.loadTexture renderer "tile" "assets/tile.png"
+
   model <- Renderer.m44ToGL $ identity * V4 32 32 1 1
   Renderer.setUniform shader "u_model" model
 
   projection <- Renderer.m44ToGL $ ortho 0 640 480 0 (-1) 1
   Renderer.setUniform shader "u_projection" projection
 
-  let Renderer {
-      rendererVertexBuffer = vertexBuffer
-    , rendererElementBuffer = elementBuffer
-    , rendererVertexArray = vertexArray
-    } = renderer'
+  let
+    vertexBuffer = renderer.rendererVertexBuffer
+    elementBuffer = renderer.rendererElementBuffer
+    vertexArray = renderer.rendererVertexArray
 
   GL.bindVertexArrayObject $= Just vertexArray
 
