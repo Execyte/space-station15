@@ -52,6 +52,7 @@ dependencies:
 - extra
 - JuicyPixels
 - atlas
+- primitive
 
 library:
   source-dirs:

@@ -45,6 +45,8 @@ import Game.UI.ConnectMenu
 import Game.Client
 import Game.Client.World
 
+import Debug.Trace as Trace
+
 -- TODO: implement tile layers
 type Tile = Int
 
@@ -93,14 +95,16 @@ eventsToIntents = mapMaybe (payloadToIntent . SDL.eventPayload)
     payloadToIntent _                           = Nothing
 
 drawTiles :: Renderer -> [[Tile]] -> IO ()
-drawTiles renderer =
-  foldM_ (\y row -> do
-    foldM_ (\x tile -> do
-      when (tile > 0) $ drawTile x y
-      pure $ succ x
-      ) 0 row
-    pure $ succ y
-    ) 0
+-- drawTiles renderer =
+--   foldM_ (\y row -> do
+--     foldM_ (\x tile -> do
+--       when (tile > 0) $ drawTile x y
+--       pure $ succ x
+--       ) 0 row
+--     pure $ succ y
+--     ) 0
+drawTiles _ _ = pure () -- we kinda broke it now because of the TEXTURE UPDATE™, so right now we
+                        -- don't run it so that it doesn't freak out and combust
   where
     makeVertices :: Int -> Int -> Vector Vertex
     makeVertices x y = Vector.fromList [
@@ -129,7 +133,7 @@ renderGame world renderer = do
   drawTiles renderer tiles
 
 loop :: Client -> IO () -> IO ()
-loop client@Client{world, renderer, sprites, textureMaps} buildUI = forever do
+loop client@Client{world, renderer} buildUI = forever do
   let
     window = renderer.rendererWindow
 
@@ -166,7 +170,12 @@ loop client@Client{world, renderer, sprites, textureMaps} buildUI = forever do
 
   GL.clear [GL.ColorBuffer]
 
-  GL.currentProgram $= Just shader
+  GL.currentProgram $= shader -- shader might be Nothing, in which case some stupid utter buffoon
+                              -- broke the part where the shader is initialized and loaded into the
+                              -- renderer, causing the program to combust spontaneously during
+                              -- rendering
+                              -- i can't be bothered to check if it's Nothing life is too short for
+                              -- that kinda shit
   GL.bindVertexArrayObject $= Just vertexArray
  
   (atomically $ tryReadTMVar world) >>= \case
@@ -210,6 +219,8 @@ main = do
   gl <- SDL.glCreateContext window
   SDL.showWindow window
 
+  renderer <- Renderer.newRenderer window
+
   im <- Im.createContext
   _ <- sdl2InitForOpenGL window gl
   _ <- openGL3Init
@@ -234,30 +245,34 @@ main = do
       hPutStrLn stderr logs
       exitFailure
     (Just shader, _) -> return shader
+    
+  -- ok uh haskell doesn't like when i shadow this name so i guess i'll just put an apostrophe here
+  -- it looks worse but we cannot have good-looking code in this world
+  let renderer' = renderer { rendererShader = Just shader }
 
-  texture <- GL.genObjectName
-  GL.activeTexture $= GL.TextureUnit 0
-  GL.textureBinding GL.Texture2D $= Just texture
+  -- texture <- GL.genObjectName
+  -- GL.activeTexture $= GL.TextureUnit 0
+  -- GL.textureBinding GL.Texture2D $= Just texture
 
-  GL.textureFilter GL.Texture2D $= ((GL.Linear', Nothing), GL.Linear')
+  -- GL.textureFilter GL.Texture2D $= ((GL.Linear', Nothing), GL.Linear')
 
-  image <- Renderer.loadImage "assets/tile.png"
+  -- image <- Renderer.loadImage "assets/tile.png"
 
-  let
-    width = fromIntegral (imageWidth image)
-    height = fromIntegral (imageHeight image)
-    pixels = imageData image
+  -- let
+  --   width = fromIntegral (imageWidth image)
+  --   height = fromIntegral (imageHeight image)
+  --   pixels = imageData image
 
-  Vector.unsafeWith pixels $ \ptr ->
-    GL.texImage2D
-      GL.Texture2D
-      GL.NoProxy 0
-      GL.RGBA'
-      (GL.TextureSize2D width height)
-      0
-      $ GL.PixelData GL.RGBA GL.UnsignedByte ptr
+  -- Vector.unsafeWith pixels $ \ptr ->
+  --   GL.texImage2D
+  --     GL.Texture2D
+  --     GL.NoProxy 0
+  --     GL.RGBA'
+  --     (GL.TextureSize2D width height)
+  --     0
+  --     $ GL.PixelData GL.RGBA GL.UnsignedByte ptr
 
-  Renderer.setUniform shader "u_texture" (GL.TextureUnit 0)
+  -- Renderer.setUniform shader "u_texture" (GL.TextureUnit 0)
 
   model <- Renderer.m44ToGL $ identity * V4 32 32 1 1
   Renderer.setUniform shader "u_model" model
@@ -265,9 +280,11 @@ main = do
   projection <- Renderer.m44ToGL $ ortho 0 640 480 0 (-1) 1
   Renderer.setUniform shader "u_projection" projection
 
-  vertexArray <- GL.genObjectName
-  vertexBuffer <- GL.genObjectName
-  elementBuffer <- GL.genObjectName
+  let Renderer {
+      rendererVertexBuffer = vertexBuffer
+    , rendererElementBuffer = elementBuffer
+    , rendererVertexArray = vertexArray
+    } = renderer'
 
   GL.bindVertexArrayObject $= Just vertexArray
 
@@ -275,7 +292,7 @@ main = do
     -- floatSize = sizeOf (undefined :: Float)
     intSize = sizeOf (undefined :: Int)
     indicesSize = fromIntegral $ intSize * Vector.length indices
-  
+
   GL.bindBuffer GL.ArrayBuffer $= Just vertexBuffer
   GL.bindBuffer GL.ElementArrayBuffer $= Just elementBuffer
   Vector.unsafeWith indices $ \ptr -> do
@@ -295,25 +312,13 @@ main = do
 
   GL.bindVertexArrayObject $= Nothing
 
-  let renderer = Renderer {
-    rendererWindow = window,
-    rendererShader = shader,
-    rendererTexture = texture,
-    rendererVertexBuffer = vertexBuffer,
-    rendererVertexArray = vertexArray
-  }
-
   worldTMVar <- newEmptyTMVarIO
-  textureMaps <- newTVarIO []
-  sprites <- newTVarIO $ IntMap.empty
   connInfo <- newTVarIO $ Disconnected ""
 
   let client = Client {
     world = worldTMVar,
     connStatus = connInfo,
-    renderer = renderer,
-    textureMaps = textureMaps,
-    sprites = sprites
+    renderer = renderer'
   }
 
   connectMenu <- atomically $ newConnectMenu

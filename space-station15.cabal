@@ -102,6 +102,7 @@ library
     , linear
     , memory
     , network
+    , primitive
     , quic
     , quic-simple
     , random
@@ -199,6 +200,7 @@ executable space-station15-client
     , linear
     , memory
     , network
+    , primitive
     , quic
     , quic-simple
     , random
@@ -291,6 +293,7 @@ executable space-station15-server
     , linear
     , memory
     , network
+    , primitive
     , quic
     , quic-simple
     , random
