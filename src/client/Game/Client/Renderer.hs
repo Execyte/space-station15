@@ -27,10 +27,10 @@ glSizeOf :: GL.DataType -> Int
 glSizeOf t = case t of
   GL.UnsignedByte -> sizeOf @Word8 undefined
   GL.Byte -> sizeOf @Int8 undefined
-  GL.UnsignedByte -> sizeOf @Word16 undefined
-  GL.Byte -> sizeOf @Int16 undefined
-  GL.UnsignedByte -> sizeOf @Word32 undefined
-  GL.Byte -> sizeOf @Int32 undefined
+  GL.UnsignedShort -> sizeOf @Word16 undefined
+  GL.Short -> sizeOf @Int16 undefined
+  GL.UnsignedInt -> sizeOf @Word32 undefined
+  GL.Int -> sizeOf @Int32 undefined
   GL.Float -> sizeOf @Float undefined
   GL.Double -> sizeOf @Double undefined
   _ -> error "unhandled vertex attribute type"
