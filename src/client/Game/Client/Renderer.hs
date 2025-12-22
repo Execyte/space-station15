@@ -13,6 +13,10 @@ module Game.Client.Renderer (
   atlasSize,
 
   loadTexture,
+  getTexture,
+
+  draw,
+
   m44ToGL,
   loadImage,
 
@@ -147,6 +151,47 @@ loadTexture renderer@Renderer{
                                               -- textures that don't fit into the atlas, which is
                                               -- not very likely to happen, but check the size
                                               -- beforehand just in case
+
+getTexture :: Renderer -> String -> IO (GL.TextureObject, V4 Int)
+getTexture Renderer{ rendererTextures = textures } name = do
+  let maybeParams = HashMap.lookup name textures
+  case maybeParams of
+    Just x -> pure x
+    Nothing -> do
+      hPutStrLn stderr "wha??????? no tile???????????"
+      exitFailure
+
+draw :: Renderer -> String -> V2 Float -> V2 Float -> IO ()
+draw renderer name
+  (V2 x y)
+  (V2 w h) = do
+  (texture, rect) <- getTexture renderer name
+
+  let vertices = mkVertices rect
+
+  let
+    vertexSize = sizeOf @Vertex undefined
+    verticesSize = fromIntegral $ vertexSize * Vector.length vertices
+
+  Vector.unsafeWith vertices $ \ptr ->
+    GL.bufferData GL.ArrayBuffer $= (verticesSize, ptr, GL.DynamicDraw)
+
+  GL.activeTexture $= GL.TextureUnit 0
+  GL.textureBinding GL.Texture2D $= Just texture
+
+  GL.drawElements GL.Triangles 6 GL.UnsignedInt nullPtr
+
+  GL.textureBinding GL.Texture2D $= Nothing
+
+  where
+    mkVertices (V4
+      (fromIntegral -> tx) (fromIntegral -> ty)
+      (fromIntegral -> tw) (fromIntegral -> th)) = Vector.fromList [
+      Vertex (V2 x y) (V2 tx ty) (V4 1 1 1 1),
+      Vertex (V2 (x + w) y) (V2 (tx + tw) ty) (V4 1 1 1 1),
+      Vertex (V2 x (y + h)) (V2 tx (ty + th)) (V4 1 1 1 1),
+      Vertex (V2 (x + w) (y + h)) (V2 (tx + tw) (ty + th)) (V4 1 1 1 1)
+      ]
 
 -- TODO: apparently M44 has Storable, so we can just pass its pointer to opengl without having to
 -- use this function, so it appears it's useless (and i'm not a big fan of it too) and it shall be

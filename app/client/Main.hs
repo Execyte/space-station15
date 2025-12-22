@@ -123,23 +123,20 @@ renderGame :: World -> Renderer -> IO ()
 renderGame world renderer = do
   runDraw world
 
-  let textures = renderer.rendererTextures
+  ((/ 1000) . fromIntegral -> seconds) <- SDL.ticks
+  (V2 (fromIntegral -> w) (fromIntegral -> h)) <- get $ SDL.windowSize renderer.rendererWindow
 
-  let maybeParams = HashMap.lookup "tile" textures
-  (texture, _) <- case maybeParams of
-    Just x -> pure x
-    Nothing -> do
-      hPutStrLn stderr "wha??????? no tile???????????"
-      exitFailure
+  let
+    x = cos (seconds * 3) * 3
+    y = sin (seconds * 3) * 3
+    w' = w / 32
+    h' = h / 32
+    cx = (w' - 1) / 2
+    cy = (h' - 1) / 2
+    x' = cx - x
+    y' = cy - y
 
-  GL.activeTexture $= GL.TextureUnit 0 -- i should be setting this as a uniform but i'm too lazy
-                                       -- besides we only have one tile so it's pointless to have
-                                       -- more than one texture unit in use
-  GL.textureBinding GL.Texture2D $= Just texture
-
-  drawTiles renderer tiles
-
-  GL.textureBinding GL.Texture2D $= Nothing
+  Renderer.draw renderer "tile" (V2 x' y') (V2 1 1)
 
 loop :: Client -> IO () -> IO ()
 loop client@Client{world, renderer} buildUI = forever do
@@ -289,7 +286,7 @@ main = do
   model <- Renderer.m44ToGL $ identity * V4 32 32 1 1
   Renderer.setUniform shader "u_model" model
 
-  projection <- Renderer.m44ToGL $ ortho 0 640 480 0 (-1) 1
+  projection <- Renderer.m44ToGL $ ortho 0 800 600 0 (-1) 1
   Renderer.setUniform shader "u_projection" projection
 
   Renderer.setUniform @Word32 shader "u_atlas_size" Renderer.atlasSize
