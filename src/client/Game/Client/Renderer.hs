@@ -10,6 +10,8 @@ module Game.Client.Renderer (
   rendererTextures,
   newRenderer,
   
+  atlasSize,
+
   loadTexture,
   m44ToGL,
   loadImage,
@@ -52,6 +54,9 @@ data Renderer = Renderer
   , rendererTextures :: HashMap String (GL.TextureObject, V4 Int)
   }
 
+atlasSize :: Integral a => a
+atlasSize = 1024
+
 resetTexture :: GL.TextureObject -> IO GL.TextureObject
 resetTexture texture = do
   GL.activeTexture $= GL.TextureUnit 0
@@ -59,14 +64,12 @@ resetTexture texture = do
 
   GL.textureFilter GL.Texture2D $= ((GL.Linear', Nothing), GL.Linear')
 
-  maxSize <- GL.maxTextureSize
-
   GL.texImage2D
     GL.Texture2D
     GL.NoProxy
     0
     GL.RGBA'
-    (GL.TextureSize2D maxSize maxSize)
+    (GL.TextureSize2D atlasSize atlasSize)
     0
     $ GL.PixelData GL.RGBA GL.UnsignedByte nullPtr
 
@@ -80,8 +83,7 @@ newRenderer window = do
   vertexArray <- GL.genObjectName
   texture <- GL.genObjectName >>= resetTexture
   
-  maxSize <- fromIntegral <$> GL.maxTextureSize
-  atlas <- create maxSize maxSize
+  atlas <- create atlasSize atlasSize
 
   pure $ Renderer {
       rendererWindow = window
@@ -100,7 +102,7 @@ loadTexture renderer@Renderer{
   , rendererAtlasTexture = texture
   , rendererTextures = textures
   } name file = do
-  image@Image{
+  Image{
       imageWidth = width
     , imageHeight = height
     , imageData = pixels
@@ -109,9 +111,9 @@ loadTexture renderer@Renderer{
   params@(texture', rect) <- tryPack atlas texture width height
 
   let
-    (V4
-      x@(fromIntegral -> x') y@(fromIntegral -> y')
-      (fromIntegral -> width') (fromIntegral -> height')) = rect
+    V4
+      (fromIntegral -> x) (fromIntegral -> y)
+      (fromIntegral -> width') (fromIntegral -> height') = rect
   
   GL.activeTexture $= GL.TextureUnit 0
   GL.textureBinding GL.Texture2D $= Just texture'
@@ -120,7 +122,7 @@ loadTexture renderer@Renderer{
     GL.texSubImage2D
       GL.Texture2D
       0
-      (GL.TexturePosition2D x' y')
+      (GL.TexturePosition2D x y)
       (GL.TextureSize2D width' height')
       $ GL.PixelData GL.RGBA GL.UnsignedByte ptr
   
@@ -137,7 +139,7 @@ loadTexture renderer@Renderer{
     tryPack atlas texture width height = do
       maybePos <- pack1 atlas $ Pt width height
       case maybePos of
-        Just (Pt x y) -> pure (texture, (V4 x y width height))
+        Just (Pt x y) -> pure (texture, V4 x y width height)
         Nothing -> do
           reset atlas
           texture' <- resetTexture texture

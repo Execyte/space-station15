@@ -1,51 +1,43 @@
 module Main (main) where
 
-import Control.Monad
-import Control.Concurrent
-import Control.Concurrent.STM 
-import Control.Concurrent.STM.TVar
-import Control.Concurrent.STM.TMVar
-
 import Data.Bits
-import Data.Text(Text)
-import Data.Maybe
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as ByteString
-import Data.Vector.Storable (Vector)
-import Data.Vector.Storable qualified as Vector
-import Data.IntMap.Strict qualified as IntMap
-import Data.StateVar
 import Data.Foldable
-
+import Data.HashMap.Strict qualified as HashMap
+import Data.Maybe
+import Data.Text (Text)
+import Control.Monad
 import System.Exit
 import System.IO
-
+import Control.Concurrent
+import Control.Concurrent.STM
+import Control.Concurrent.STM.TVar
+import Control.Concurrent.STM.TMVar
+import Data.Vector.Storable (Vector)
+import Data.Vector.Storable qualified as Vector
 import Foreign hiding (void)
 
 import Linear
-
 import Codec.Picture
-
-import Game.Client.Renderer qualified as Renderer
-import Game.Client.Renderer (Renderer(..), Vertex(..))
-import Im qualified
+import Data.StateVar
 import DearImGui.OpenGL3
 import DearImGui.Raw.IO qualified as ImIO
 import DearImGui.SDL
-import SDL qualified
 import DearImGui.SDL.OpenGL
 import Graphics.Rendering.OpenGL.GL qualified as GL
+import SDL qualified
 
-import Network.Message
-import Network.Client.ConnectionStatus
-
-import Game.Intent
 import Game.Direction
-import Game.UI.ConnectMenu
+import Game.Intent
 import Game.Client
 import Game.Client.World
-
-import Debug.Trace as Trace
+import Game.UI.ConnectMenu
+import Network.Message
+import Network.Client.ConnectionStatus
+import Game.Client.Renderer qualified as Renderer
+import Game.Client.Renderer (Renderer(..), Vertex(..))
+import Im qualified
 
 -- TODO: implement tile layers
 type Tile = Int
@@ -95,23 +87,23 @@ eventsToIntents = mapMaybe (payloadToIntent . SDL.eventPayload)
     payloadToIntent _                           = Nothing
 
 drawTiles :: Renderer -> [[Tile]] -> IO ()
--- drawTiles renderer =
---   foldM_ (\y row -> do
---     foldM_ (\x tile -> do
---       when (tile > 0) $ drawTile x y
---       pure $ succ x
---       ) 0 row
---     pure $ succ y
---     ) 0
-drawTiles _ _ = pure () -- we kinda broke it now because of the TEXTURE UPDATEâ„¢, so right now we
-                        -- don't run it so that it doesn't freak out and combust
+drawTiles renderer =
+  foldM_ (\y row -> do
+    foldM_ (\x tile -> do
+      when (tile > 0) $ drawTile x y
+      pure $ succ x
+      ) 0 row
+    pure $ succ y
+    ) 0
+-- drawTiles _ _ = pure () -- we kinda broke it now because of the TEXTURE UPDATEâ„¢, so right now we
+--                         -- don't run it so that it doesn't freak out and combust
   where
     makeVertices :: Int -> Int -> Vector Vertex
     makeVertices x y = Vector.fromList [
       Vertex (V2 fx fy) (V2 0 0) (V4 1 1 1 1),
-      Vertex (V2 (fx + 1) fy) (V2 1 0) (V4 1 1 1 1),
-      Vertex (V2 fx (fy + 1)) (V2 0 1) (V4 1 1 1 1),
-      Vertex (V2 (fx + 1) (fy + 1)) (V2 1 1) (V4 1 1 1 1)
+      Vertex (V2 (fx + 1) fy) (V2 32 0) (V4 1 1 1 1),
+      Vertex (V2 fx (fy + 1)) (V2 0 32) (V4 1 1 1 1),
+      Vertex (V2 (fx + 1) (fy + 1)) (V2 32 32) (V4 1 1 1 1)
       ]
       where
         (fx, fy) = (fromIntegral x, fromIntegral y)
@@ -121,7 +113,7 @@ drawTiles _ _ = pure () -- we kinda broke it now because of the TEXTURE UPDATEâ„
       let
         vertexSize = sizeOf (undefined :: Vertex)
         verticesSize = fromIntegral $ vertexSize * Vector.length vertices
-      
+
       Vector.unsafeWith vertices $ \ptr ->
         GL.bufferData GL.ArrayBuffer $= (verticesSize, ptr, GL.DynamicDraw)
 
@@ -130,7 +122,24 @@ drawTiles _ _ = pure () -- we kinda broke it now because of the TEXTURE UPDATEâ„
 renderGame :: World -> Renderer -> IO ()
 renderGame world renderer = do
   runDraw world
+
+  let textures = renderer.rendererTextures
+
+  let maybeParams = HashMap.lookup "tile" textures
+  (texture, _) <- case maybeParams of
+    Just x -> pure x
+    Nothing -> do
+      hPutStrLn stderr "wha??????? no tile???????????"
+      exitFailure
+
+  GL.activeTexture $= GL.TextureUnit 0 -- i should be setting this as a uniform but i'm too lazy
+                                       -- besides we only have one tile so it's pointless to have
+                                       -- more than one texture unit in use
+  GL.textureBinding GL.Texture2D $= Just texture
+
   drawTiles renderer tiles
+
+  GL.textureBinding GL.Texture2D $= Nothing
 
 loop :: Client -> IO () -> IO ()
 loop client@Client{world, renderer} buildUI = forever do
@@ -177,7 +186,7 @@ loop client@Client{world, renderer} buildUI = forever do
                               -- i can't be bothered to check if it's Nothing life is too short for
                               -- that kinda shit
   GL.bindVertexArrayObject $= Just vertexArray
- 
+
   (atomically $ tryReadTMVar world) >>= \case
     Just world' -> renderGame world' renderer
     Nothing -> pure ()
@@ -245,7 +254,7 @@ main = do
       hPutStrLn stderr logs
       exitFailure
     (Just shader, _) -> return shader
-    
+
   -- ok uh haskell doesn't like when i shadow this name so i guess i'll just put an apostrophe here
   -- it looks worse but we cannot have good-looking code in this world
   let renderer' = renderer { rendererShader = Just shader }
@@ -275,7 +284,7 @@ main = do
   -- Renderer.setUniform shader "u_texture" (GL.TextureUnit 0)
 
   -- please don't make me do this haskell
-  renderer'' <- Renderer.loadTexture renderer "tile" "assets/tile.png"
+  renderer'' <- Renderer.loadTexture renderer' "tile" "assets/tile.png"
 
   model <- Renderer.m44ToGL $ identity * V4 32 32 1 1
   Renderer.setUniform shader "u_model" model
@@ -283,10 +292,12 @@ main = do
   projection <- Renderer.m44ToGL $ ortho 0 640 480 0 (-1) 1
   Renderer.setUniform shader "u_projection" projection
 
+  Renderer.setUniform @Word32 shader "u_atlas_size" Renderer.atlasSize
+
   let
-    vertexBuffer = renderer.rendererVertexBuffer
-    elementBuffer = renderer.rendererElementBuffer
-    vertexArray = renderer.rendererVertexArray
+    vertexBuffer = renderer''.rendererVertexBuffer
+    elementBuffer = renderer''.rendererElementBuffer
+    vertexArray = renderer''.rendererVertexArray
 
   GL.bindVertexArrayObject $= Just vertexArray
 
@@ -320,7 +331,7 @@ main = do
   let client = Client {
     world = worldTMVar,
     connStatus = connInfo,
-    renderer = renderer'
+    renderer = renderer''
   }
 
   connectMenu <- atomically $ newConnectMenu
