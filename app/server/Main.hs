@@ -28,6 +28,7 @@ import Game.Server
 import Game.Server.Simulation
 import Game.Server.World
 
+-- TODO: fix memory leak relating to connected users not being removed after a certain time of not pinging
 main :: IO ()
 main = do
   players <- newTVarIO Map.empty

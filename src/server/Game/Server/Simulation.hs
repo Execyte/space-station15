@@ -31,34 +31,26 @@ act _ _ = pure ()
 step :: Float -> System' ()
 step dT = pure ()
 
--- | This is what handles sending component snapshots and whatnot to the player.
+packSnapshot :: Entity -> System' ComponentSnapshot
+packSnapshot ent = do
+  newPos <- get ent :: System' (Maybe Position)
+  pure $ ComponentSnapshot{pos = newPos}
+
+-- | This is what handles sending component updates to the player.
 networkSystem :: NetStatus -> System' ()
 networkSystem netstatus = do
-  dirties <- collect \(Dirty, Entity ent) -> Just ent
-  forM_ dirties \ent_ -> do
+  dirties <- collect \(Dirty, Entity entId) -> Just (Entity entId, entId)
+  forM_ dirties \(ent, entId) -> do
     snapshots <- lift $ readTVarIO netstatus.snapshots
-    let ent = Entity ent_
-    modify ent \Dirty -> Not @Dirty
-    case HashMap.lookup ent_ snapshots of
-      Just snapshot -> do
-        newPos <- get ent :: System' (Maybe Position)
-        let newSnapshot = ComponentSnapshot{pos = either' newPos (pos snapshot)}
 
-        if newSnapshot /= snapshot then
-          lift $ do
-            conns <- readTVarIO netstatus.conns
-            forM_ conns $ \(_, (Connection{writeQueue})) -> atomically $ writeTBQueue writeQueue (Event $ ComponentSnapshotPacket ent_ newSnapshot)
-            atomically $ modifyTVar' netstatus.snapshots (HashMap.insert ent_ newSnapshot)
-        else
-          pure ()
-      Nothing -> do
-        newPos <- get ent :: System' (Maybe Position)
-        let snapshot = ComponentSnapshot{pos = newPos}
-        lift $ do
+    modify ent \Dirty -> Not @Dirty
+    snapshot <- packSnapshot ent
+
+    case HashMap.lookup entId snapshots of
+      Just oldSnapshot | snapshot == oldSnapshot -> pure ()
+      _ -> lift do
           conns <- readTVarIO netstatus.conns
-          forM_ conns $ \(_, (Connection{writeQueue})) -> atomically $ writeTBQueue writeQueue (Event $ ComponentSnapshotPacket ent_ snapshot)
-          atomically $ modifyTVar' netstatus.snapshots (HashMap.insert ent_ snapshot)
-  where
-    either' Nothing b = b
-    either' a Nothing = a
-    either' a b = if b == a then b else a
+          forM_ conns \(_, Connection{writeQueue}) -> atomically $ writeTBQueue writeQueue (Event $ ComponentSnapshotPacket entId snapshot)
+          atomically $ modifyTVar' netstatus.snapshots (HashMap.insert entId snapshot)
+
+
