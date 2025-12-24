@@ -1,6 +1,6 @@
 module Game.Server(Server(..)) where
 
-import Game.Server.Simulation
+import Game.Server.World
 import Control.Concurrent.STM.TVar
 
 import Data.Text(Text)

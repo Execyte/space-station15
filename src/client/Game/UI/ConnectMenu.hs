@@ -75,7 +75,7 @@ drawConnectMenu client ConnectMenu{server_ip, username, password} = do
                   (LoginSuccess e) -> do
                     putStrLn $ "YAY! LOGIN SUCCESS! MY ENTITY NUMBER IS " <> (show e)
                     world' <- initGame
-                    void $ runWith world' $ newEntity (Me, Position (V2 0 0), NetEntity e)
+                    void $ runWith world' $ newEntity (Me, Position 0 0, NetEntity e)
                     atomically $ writeTMVar world world'
                   LoginFail -> do
                     atomically $ writeTVar connStatus $ Disconnected "server reported login fail"

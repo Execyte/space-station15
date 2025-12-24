@@ -42,7 +42,7 @@ draw = pure ()
 
 -- | Main function to set globals and other things when the world needs to be initialized.
 initialise :: System' ()
-initialise = set global $ Camera (V2 0.0 0.0)
+initialise = set global $ Camera 0.0 0.0
 
 runDraw :: World -> IO ()
 runDraw world = runWith world draw

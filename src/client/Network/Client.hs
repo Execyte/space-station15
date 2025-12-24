@@ -23,9 +23,9 @@ processEvent client (ComponentSnapshotPacket id snapshot) =
     Just world -> runWith world $ withNetEntity id
       \ent ->
         case snapshot.pos of
-          Just (Position pos) -> do
+          Just (MkPosition pos) -> do
             lift $ putStrLn $ show pos
-            modify ent \(Position p) -> Position pos
+            modify ent \(MkPosition p) -> MkPosition pos
           Nothing -> pure ()
     Nothing -> pure ()
 processEvent _ n = do

@@ -10,6 +10,7 @@ import Network.QUIC.Simple qualified as QUIC
 import Network.Snapshot
 import Network.Server
 import Network.Server.ConnectionStatus
+import Network.Server.NetStatus
 import Network.Message
 
 import Data.Text(Text, unpack, pack)
@@ -22,75 +23,10 @@ import Data.IORef (newIORef, atomicModifyIORef')
 import Codec.Serialise(Serialise)
 
 import Apecs
-import Game
+
 import Game.Server
 import Game.Server.Simulation
-
-type Login = Text
-
-loginInfo :: Map.Map Text Text
-loginInfo = Map.fromList [("test", "test")]
-
-handleCall :: Server -> ServerNetworkInfo -> Login -> Message -> IO (Maybe Message)
-handleCall _ _ _ Ping = pure $ Just Pong
-handleCall _ _ _ _ = pure Nothing
-
-handleCast :: Server -> ServerNetworkInfo -> Login -> Message -> IO ()
-handleCast server netinfo name (Action action) = do
-  players' <- readTVarIO netinfo.players
-  case Map.lookup name players' of
-    Just ent -> atomically $ writeTBQueue netinfo.actions (ent, action)
-    Nothing -> pure ()
-handleCast _ _ _ _ = pure ()
-
-registerPlayer :: World -> Text -> IO Entity
-registerPlayer world name = runWith world $ newEntity (Player name, Position (V2 0 0))
-
-checkPass :: Text -> Text -> Bool
-checkPass = (==)
-
-tryLogin :: Server -> ServerNetworkInfo -> Connection -> Login -> Text -> IO (Maybe Message)
-tryLogin server netinfo conn name pass = do
-  world <- readTVarIO server.world
-  case Map.lookup name loginInfo of
-    Just acctPass | checkPass acctPass pass -> do
-      atomically $ modifyTVar' netinfo.logins \logins -> Map.insert conn.connId name logins
-      ent <- tryMakeEntity world netinfo name
-      pure $ Just (LoginSuccess (unEntity ent))
-    _ -> pure Nothing
-  where
-    tryMakeEntity world netinfo name = do
-      players <- readTVarIO netinfo.players
-      case Map.lookup name players of
-        Nothing -> do
-          ent <- registerPlayer world name
-          atomically $ modifyTVar' netinfo.players \players -> Map.insert name ent players
-          pure $ ent
-        Just ent ->
-          pure $ ent
-
-handleConnecting :: Server -> ServerNetworkInfo -> Connection -> ClientMessage Message -> IO (Connection, Maybe (ServerMessage Message))
-handleConnecting server netinfo conn (Call id (TryLogin name pass)) = do
-  let _str_name = unpack name
-  reply <- tryLogin server netinfo conn name pass
-  case reply of
-    Just x -> do
-      putStrLn $ "Player login: " <> _str_name 
-      pure (conn{connStatus = LoggedIn name}, (Reply id) <$> (Just x))
-    Nothing -> do
-      atomically $ writeTBQueue conn.writeQueue (Reply id LoginFail)
-      error "disconnect"
-      pure (conn, Nothing)
-handleConnecting _ _ conn _ = pure (conn, Nothing)
-
-handleMessage :: Server -> ServerNetworkInfo -> Connection -> ClientMessage Message -> IO (Connection, Maybe (ServerMessage Message))
-handleMessage server netinfo conn@Connection{connStatus=(LoggedIn name)} (Call id msg') = do
-  reply <- handleCall server netinfo name msg'
-  pure (conn, (Reply id) <$> reply)
-handleMessage server netinfo conn@Connection{connStatus=(LoggedIn name)} (Cast msg') = do
-  handleCast server netinfo name msg'
-  pure (conn, Nothing)
-handleMessage _ _ conn _ = pure (conn, Nothing)
+import Game.Server.World
 
 main :: IO ()
 main = do
@@ -106,7 +42,7 @@ main = do
   
   let 
       server = Server { world = world }
-      netinfo = ServerNetworkInfo {
+      netstatus = NetStatus {
         logins = logins
       , players = players
       , actions = actions
@@ -117,10 +53,9 @@ main = do
   let
     handler conn msg =
       case conn.connStatus of
-        Connecting -> handleConnecting server netinfo conn msg
-        LoggedIn name -> handleMessage server netinfo conn msg
+        Connecting -> handleConnecting server netstatus conn msg
+        LoggedIn name -> handleMessage server netstatus conn msg
         Disconnecting -> pure (conn, Nothing)
-
     setup conns counter _conn writeQ = do
       connId <- atomicModifyIORef' counter \old -> (old + 1, old)
       me <- myThreadId >>= mkWeakThreadId
@@ -137,6 +72,6 @@ main = do
     Apecs.runWith world' $ do
       act ent action
       step (1/60)
-      networkSystem netinfo
+      networkSystem netstatus
 
   QUIC.runServerStateful "127.0.0.1" 2525 (setup conns connIds) (teardown conns) handler

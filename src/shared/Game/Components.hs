@@ -1,6 +1,20 @@
 module Game.Components(
   ServerEntity, ClientEntity,
-  Camera(..), Me(..), NetEntity(..), Player(..), Position(..), Dirty(..)
+
+  -- Client-only Components
+  Camera(..),
+  NetEntity(..),
+  Me(..),
+
+  -- Shared components
+  Player(..),
+  Position(..),
+
+  -- Server-only components
+  Dirty(..),
+
+  pattern Camera,
+  pattern Position
 ) where
 
 import GHC.Generics(Generic)
@@ -35,11 +49,13 @@ instance Component Me where
   type Storage Me = Unique Me
 
 -- | The position of the camera, this should only be available to the client.
-newtype Camera = Camera (V2 Float) deriving Show
+newtype Camera = MkCamera (V2 Float) deriving Show
 instance Component Camera where
   type Storage Camera = Global Camera
-instance Semigroup Camera where (Camera p1) <> (Camera p2) = Camera $ (p1 ^+^ p2)
-instance Monoid Camera where mempty = Camera $ V2 0 0
+instance Semigroup Camera where (MkCamera p1) <> (MkCamera p2) = MkCamera $ (p1 ^+^ p2)
+instance Monoid Camera where mempty = MkCamera $ V2 0 0
+
+pattern Camera x y = MkCamera (V2 x y)
 
 -- | This is a mapping between server and client entity IDs.
 newtype NetEntity = NetEntity ServerEntityId
@@ -56,12 +72,14 @@ instance Component Player where
 instance Serialise Player
 
 -- | This is the position of any entity in the game world. Keep it as Int for servers, but floats for clients (for animation mostly.)
-newtype Position = Position (V2 Float)
+newtype Position = MkPosition (V2 Float)
   deriving (Show, Eq)
   deriving Generic
 instance Component Position where
   type Storage Position = Map Position
 instance Serialise Position
+
+pattern Position x y = MkPosition (V2 x y)
 
 -- | This is used to mark an entity that it's components have changed and need to be reconciled to the clients. You should, for the most part, always add this if you want the clients to see the changes.
 data Dirty = Dirty deriving Show

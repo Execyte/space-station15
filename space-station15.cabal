@@ -223,8 +223,10 @@ executable space-station15-server
   other-modules:
       Game.Server
       Game.Server.Simulation
+      Game.Server.World
       Network.Server
       Network.Server.ConnectionStatus
+      Network.Server.NetStatus
       Paths_space_station15
   autogen-modules:
       Paths_space_station15
