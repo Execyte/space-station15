@@ -6,8 +6,8 @@ import Game
 import Game.Server.World
 
 import Data.Maybe
-import Data.HashMap.Strict(HashMap)
-import Data.HashMap.Strict qualified as HashMap
+import Data.IntMap.Strict(IntMap)
+import Data.IntMap.Strict qualified as IntMap
 
 import Control.Monad
 import Control.Concurrent.STM
@@ -16,7 +16,6 @@ import Control.Concurrent.STM.TVar
 import Network.Message
 import Network.Snapshot
 import Network.Server
-import Network.Server.ConnectionStatus
 import Network.Server.NetStatus
 
 -- | The act function is where the player's intents will be processed.
@@ -46,11 +45,11 @@ networkSystem netstatus = do
     modify ent \Dirty -> Not @Dirty
     snapshot <- packSnapshot ent
 
-    case HashMap.lookup entId snapshots of
+    case IntMap.lookup entId snapshots of
       Just oldSnapshot | snapshot == oldSnapshot -> pure ()
       _ -> lift do
           conns <- readTVarIO netstatus.conns
           forM_ conns \(_, Connection{writeQueue}) -> atomically $ writeTBQueue writeQueue (Event $ ComponentSnapshotPacket entId snapshot)
-          atomically $ modifyTVar' netstatus.snapshots (HashMap.insert entId snapshot)
+          atomically $ modifyTVar' netstatus.snapshots (IntMap.insert entId snapshot)
 
 

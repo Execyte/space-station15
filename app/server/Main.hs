@@ -9,14 +9,12 @@ import Control.Concurrent.Async
 import Network.QUIC.Simple qualified as QUIC
 import Network.Snapshot
 import Network.Server
-import Network.Server.ConnectionStatus
 import Network.Server.NetStatus
 import Network.Message
 
 import Data.Text(Text, unpack, pack)
 import Data.IntMap.Strict qualified as IntMap
 import Data.Map.Strict qualified as Map
-import Data.HashMap.Strict qualified as HashMap
 import Data.Maybe
 import Data.IORef (newIORef, atomicModifyIORef')
 
@@ -34,7 +32,7 @@ main = do
   players <- newTVarIO Map.empty
   logins <- newTVarIO Map.empty
   conns <- newTVarIO mempty
-  snapshots <- newTVarIO HashMap.empty
+  snapshots <- newTVarIO IntMap.empty
   actions <- newTBQueueIO 32
   connIds <- newIORef 0
 

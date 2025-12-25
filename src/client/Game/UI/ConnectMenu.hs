@@ -14,6 +14,7 @@ import Control.Monad.Extra(whenM)
 import Control.Exception(try, SomeException(..))
 
 import Network.Message
+import Network.Login
 import Network.Client
 import Network.Client.Manager
 import Network.Client.ConnectionStatus
@@ -71,7 +72,7 @@ drawConnectMenu client ConnectMenu{server_ip, username, password} = do
             where
               tryLogin name pass world connStatus = do
                 (Connected (_, call, _, _)) <- readTVarIO connStatus
-                void $ call (TryLogin name pass) >>= \case
+                void $ call (TryLogin (LoginName name) pass) >>= \case
                   (LoginSuccess e) -> do
                     putStrLn $ "YAY! LOGIN SUCCESS! MY ENTITY NUMBER IS " <> (show e)
                     world' <- initGame

@@ -29,6 +29,7 @@ library
       Game.Components
       Game.Direction
       Game.Intent
+      Network.Login
       Network.Message
       Network.Snapshot
   other-modules:
@@ -225,7 +226,6 @@ executable space-station15-server
       Game.Server.Simulation
       Game.Server.World
       Network.Server
-      Network.Server.ConnectionStatus
       Network.Server.NetStatus
       Paths_space_station15
   autogen-modules:

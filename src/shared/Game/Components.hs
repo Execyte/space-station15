@@ -28,6 +28,8 @@ import Data.Semigroup
 import Data.Monoid
 import Data.Text(Text)
 
+import Network.Login
+
 import Codec.Serialise(Serialise)
 
 import GHC.Generics(Generic)
@@ -64,7 +66,7 @@ instance Component NetEntity where
   type Storage NetEntity = Reactive (EnumMap NetEntity) (Map NetEntity)
 
 -- | This is used on the server to identify entities owned by the player, usually stuff they control. It just contains their username.
-newtype Player = Player Text
+newtype Player = Player LoginName
   deriving Show
   deriving Generic
 instance Component Player where

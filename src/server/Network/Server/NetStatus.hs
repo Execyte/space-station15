@@ -1,9 +1,17 @@
-module Network.Server.NetStatus where
+module Network.Server.NetStatus(
+  LoginName(..),
+  ConnectionId(..),
+
+  ConnectionStatus(..),
+  Connection(..),
+
+  NetStatus(..)) where
 
 import Game.Intent(Intent)
 
 import Network.Snapshot
-import Network.Server.ConnectionStatus
+import Network.Message
+import Network.Login
 
 import GHC.Weak(Weak)
 
@@ -17,11 +25,27 @@ import Data.IntMap.Strict(IntMap)
 import Data.HashMap.Strict(HashMap)
 import Apecs(Entity)
 
+newtype ConnectionId = ConnectionId Int deriving (Show, Eq, Ord)
+
+-- | The connection status between the server and a client.
+data ConnectionStatus =
+    Connecting -- ^ Waiting for the login information to be sent.
+  | LoggedIn LoginName -- ^ Logged in and active.
+  | Disconnecting -- ^ Waiting to be properly removed from the game.
+  deriving Show
+
+-- | This is the definition of a connection.
+data Connection = Connection
+  { writeQueue :: TBQueue (ServerMessage Message) -- ^ The write queue contains data that needs to be sent to the client. This is where you would write server to client messages.
+  , connId :: Int
+  , connStatus :: ConnectionStatus
+  }
+
 -- | This is where all information about the server's network is stored.
 data NetStatus = NetStatus
-  { players :: TVar (Map Text Entity) -- ^ Logged in players and their respective entities. Name mapped to the entity that they control.
-  , logins :: TVar (Map Int Text) -- ^ Actively logged in players, connId mapped to the logged in name.
+  { players :: TVar (Map LoginName Entity) -- ^ Logged in players and their respective entities. Name mapped to the entity that they control.
+  , logins :: TVar (Map ConnectionId LoginName) -- ^ Actively logged in players, connId mapped to the logged in name.
   , conns :: TVar (IntMap (Weak ThreadId, Connection)) -- ^ The active connections.
   , actions :: TBQueue (Entity, Intent) -- ^ A queue that contains actions of the player.
-  , snapshots :: TVar (HashMap Int ComponentSnapshot) -- ^ A hashmap that contains last snapshots of every networked entity.
+  , snapshots :: TVar (IntMap ComponentSnapshot) -- ^ A hashmap that contains last snapshots of every networked entity.
   }

@@ -1,6 +1,4 @@
-module Network.Server
-  (handleConnecting,
-   handleMessage) where
+module Network.Server(handleConnecting, handleMessage) where
 
 import Control.Monad
 import Control.Concurrent
@@ -10,7 +8,6 @@ import Control.Concurrent.Async
 
 import Network.Message
 import Network.Snapshot
-import Network.Server.ConnectionStatus
 import Network.Server.NetStatus
 
 import Control.Concurrent
@@ -30,16 +27,14 @@ import Game.Components
 import Game.Server
 import Game.Server.World
 
-type Login = Text
+loginInfo :: Map.Map LoginName Text
+loginInfo = Map.fromList [(LoginName "test", "test")]
 
-loginInfo :: Map.Map Text Text
-loginInfo = Map.fromList [("test", "test")]
-
-handleCall :: Server -> NetStatus -> Login -> Message -> IO (Maybe Message)
+handleCall :: Server -> NetStatus -> LoginName -> Message -> IO (Maybe Message)
 handleCall _ _ _ Ping = pure $ Just Pong
 handleCall _ _ _ _ = pure Nothing
 
-handleCast :: Server -> NetStatus -> Login -> Message -> IO ()
+handleCast :: Server -> NetStatus -> LoginName -> Message -> IO ()
 handleCast server netstatus name (Action action) = do
   players' <- readTVarIO netstatus.players
   case Map.lookup name players' of
@@ -50,12 +45,14 @@ handleCast _ _ _ _ = pure ()
 checkPass :: Text -> Text -> Bool
 checkPass = (==)
 
-tryLogin :: Server -> NetStatus -> Connection -> Login -> Text -> IO (Maybe Message)
+type Password = Text
+
+tryLogin :: Server -> NetStatus -> Connection -> LoginName -> Password -> IO (Maybe Message)
 tryLogin server netstatus conn name pass = do
   world <- readTVarIO server.world
   case Map.lookup name loginInfo of
     Just acctPass | checkPass acctPass pass -> do
-      atomically $ modifyTVar' netstatus.logins \logins -> Map.insert conn.connId name logins
+      atomically $ modifyTVar' netstatus.logins \logins -> Map.insert (ConnectionId conn.connId) name logins
       ent <- tryMakeEntity world netstatus name
       pure $ Just (LoginSuccess (unEntity ent))
     _ -> pure Nothing
@@ -70,16 +67,14 @@ tryLogin server netstatus conn name pass = do
         Just ent ->
           pure $ ent
 
-registerPlayer :: World -> Text -> IO Entity
+registerPlayer :: World -> LoginName -> IO Entity
 registerPlayer world name = runWith world $ newEntity (Player name, Position 0 0)
 
 handleConnecting :: Server -> NetStatus -> Connection -> ClientMessage Message -> IO (Connection, Maybe (ServerMessage Message))
 handleConnecting server netstatus conn (Call id (TryLogin name pass)) = do
-  let _str_name = Text.unpack name
   reply <- tryLogin server netstatus conn name pass
   case reply of
     Just x -> do
-      putStrLn $ "Player login: " <> _str_name 
       pure (conn{connStatus = LoggedIn name}, (Reply id) <$> (Just x))
     Nothing -> do
       atomically $ writeTBQueue conn.writeQueue (Reply id LoginFail)

@@ -11,13 +11,14 @@ import Codec.Serialise(Serialise)
 import GHC.Generics(Generic)
 import Game.Intent(Intent)
 import Network.Snapshot
+import Network.Login
 
 type ServerEntity = Int
 
 -- | These are the payloads that the server and client pass around.
 data Message =
     Ping | Pong
-  | TryLogin Text Text | LoginSuccess ServerEntity | LoginFail
+  | TryLogin LoginName Text | LoginSuccess ServerEntity | LoginFail
   | Action Intent
   | ComponentSnapshotPacket ServerEntity ComponentSnapshot
   deriving Show
