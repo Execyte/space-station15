@@ -73,16 +73,22 @@ drawConnectMenu client ConnectMenu{server_ip, username, password} = do
           pure ()
             where
               tryLogin name pass world connStatus = do
-                (Connected (_, call, _, _)) <- readTVarIO connStatus
+                (Connected (stop, call, _, _)) <- readTVarIO connStatus
                 void $ call (TryLogin (LoginName name) (Password pass)) >>= \(LoginStatusPacket status) -> case status of
-                  LoginSuccess e -> do
-                    putStrLn $ "YAY! LOGIN SUCCESS! MY ENTITY NUMBER IS " <> (show e)
+                  LoginSuccess ent -> do
+                    putStrLn $ "YAY! LOGIN SUCCESS! MY ENTITY NUMBER IS " <> (show ent)
                     world' <- initGame
-                    void $ runWith world' $ newEntity (Me, Position 0 0, NetEntity $ ServerEntityId e)
+                    void $ runWith world' $ newEntity (Me, Position 0 0, NetEntity $ ServerEntityId ent)
                     atomically $ writeTMVar world world'
-                  LoginFail -> do
-                    atomically $ writeTVar connStatus $ Disconnected "server reported login fail"
+                    downloadWorld client connStatus
+                  LoginFail err -> do
+                    stop
+                    atomically $ writeTVar connStatus $ Disconnected err
                     error "disconnect"
+
+              downloadWorld client connStatus = do
+                (Connected (stop, call, _, _)) <- readTVarIO connStatus
+                void $ call RequestWorldSnapshot >>= \snapshot -> processEvent client snapshot
 
               pingLoop connStatus = do
                 (Connected (stop, call, _, _)) <- readTVarIO connStatus

@@ -29,10 +29,14 @@ import Game.Server
 import Game.Server.World
 
 loginInfo :: Map.Map LoginName Password
-loginInfo = Map.fromList [(LoginName "test", Password "test")]
+loginInfo = Map.fromList [(LoginName "test", Password "test"), (LoginName "test2", Password "test2")]
 
 handleCall :: Server -> NetStatus -> LoginName -> MessageFromClient -> IO (Maybe MessageFromServer)
 handleCall _ _ _ Ping = pure $ Just Pong
+handleCall server _ _ RequestWorldSnapshot =
+  (atomically $ readTVar server.world) >>= \world' -> runWith world' do
+    worldSnapshot <- packWorld
+    lift $ pure $ Just $ WorldSnapshotPacket worldSnapshot
 handleCall _ _ _ _ = pure Nothing
 
 handleCast :: Server -> NetStatus -> LoginName -> MessageFromClient -> IO ()
@@ -76,7 +80,7 @@ handleConnecting server netstatus conn (Call id (TryLogin name pass)) = do
     Just x -> do
       pure (conn{connStatus = LoggedIn name}, (Reply id) <$> (Just x))
     Nothing -> do
-      atomically $ writeTBQueue conn.writeQueue (Reply id $ LoginStatusPacket LoginFail)
+      atomically $ writeTBQueue conn.writeQueue (Reply id $ LoginStatusPacket $ LoginFail "username or password is incorrect")
       error "disconnect"
       pure (conn, Nothing)
 handleConnecting _ _ conn _ = pure (conn, Nothing)

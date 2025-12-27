@@ -1,4 +1,4 @@
-module Game.Client.World(World, System', initWorld, withNetEntity)where
+module Game.Client.World(World, System', initWorld, withNetEntity, getNetEntity)where
 
 import Apecs
 import Apecs.Experimental.Reactive
@@ -15,3 +15,9 @@ withNetEntity netEntity f =
   withReactive (enumLookup (NetEntity netEntity)) >>= \case
     [localEntity] -> f localEntity
     _ -> pure ()
+
+getNetEntity :: ServerEntityId -> System' (Maybe Entity)
+getNetEntity netEntity =
+  withReactive (enumLookup (NetEntity netEntity)) >>= \case
+    [localEntity] -> pure $ Just localEntity
+    _ -> pure $ Nothing

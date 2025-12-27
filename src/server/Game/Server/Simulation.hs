@@ -32,11 +32,6 @@ act _ _ = pure ()
 step :: Float -> System' ()
 step dT = pure ()
 
-packSnapshot :: Entity -> System' ComponentSnapshot
-packSnapshot ent = do
-  newPos <- get ent :: System' (Maybe Position)
-  pure $ ComponentSnapshot{pos = newPos}
-
 sendUpdatesToClients :: NetStatus -> System' ()
 sendUpdatesToClients netstatus = do
   dirties <- collect \(Dirty, Entity entId) -> Just (Entity entId, entId)
@@ -52,6 +47,3 @@ sendUpdatesToClients netstatus = do
           conns <- readTVarIO netstatus.conns
           forM_ conns \(_, Connection{writeQueue}) -> atomically $ writeTBQueue writeQueue (Event $ EntitySnapshotPacket $ EntitySnapshot (ServerEntityId entId) snapshot)
           atomically $ modifyTVar' netstatus.snapshots (IntMap.insert entId snapshot)
-
--- | the world is packaged and sent to the client as a list of component snapshots.
-packWorld = undefined

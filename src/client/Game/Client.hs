@@ -31,20 +31,22 @@ initGame = do
   runWith world initialise
   pure world
 
+-- TODO: call step cus apparently it never gets called
+
 -- | Step the world once. Here is where you should be putting most of the systems.
 step :: Float -> System' ()
 step dT = pure ()
 
 -- | Draw the world to the screen.
 draw :: Renderer -> System' ()
-draw renderer = cmapM_ \(Me, Position x y) -> lift $ Renderer.draw renderer "tile" (V2 x y) (V2 1 1)
+draw renderer = cmapM_ \(Position x y) -> lift $ Renderer.draw renderer "tile" (V2 x y) (V2 1 1)
 
 -- | Main function to set globals and other things when the world needs to be initialized.
 initialise :: System' ()
 initialise = set global $ Camera 0.0 0.0
 
 runDraw :: World -> Renderer -> IO ()
-runDraw world renderer = runWith world (draw renderer)
+runDraw world renderer = runWith world $ draw renderer
 
 runGame :: Float -> World -> IO ()
 runGame dT world = runWith world $ step dT

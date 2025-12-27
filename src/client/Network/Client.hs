@@ -3,6 +3,7 @@ module Network.Client(processEvent) where
 import Apecs
 
 import Control.Monad
+import Control.Monad.Extra
 import Control.Concurrent.STM
 import Control.Concurrent.STM.TVar
 import Control.Concurrent.STM.TBQueue
@@ -13,20 +14,26 @@ import Network.Client.ConnectionStatus
 
 import Game
 import Game.Client
-import Game.Client.World(withNetEntity)
+import Game.Client.World
+
+processEntitySnapshot :: EntitySnapshot -> System' ()
+processEntitySnapshot (EntitySnapshot id snapshot) = do
+  ent <- getNetEntity id >>= \case
+           Just ent -> pure ent
+           Nothing -> newEntity (NetEntity id)
+  case snapshot.pos of
+    Just (MkPosition pos') -> set ent $ MkPosition pos'
+    Nothing -> pure ()
 
 -- | Here is where you process random data that the server sends to you.
--- The main cases here are component and world snapshots.
 processEvent :: Client -> MessageFromServer -> IO ()
-processEvent client (EntitySnapshotPacket (EntitySnapshot id snapshot)) =
+processEvent client (EntitySnapshotPacket entSnapshot) =
   (atomically $ tryReadTMVar client.world) >>= \case
-    Just world -> runWith world $ withNetEntity id
-      \ent ->
-        case snapshot.pos of
-          Just (MkPosition pos) -> do
-            lift $ putStrLn $ show pos
-            modify ent \(MkPosition p) -> MkPosition pos
-          Nothing -> pure ()
+    Just world -> runWith world $ processEntitySnapshot entSnapshot
+    Nothing -> pure ()
+processEvent client (WorldSnapshotPacket (WorldSnapshot xs)) =
+  (atomically $ tryReadTMVar client.world) >>= \case
+    Just world -> runWith world $ sequence_ $ map processEntitySnapshot xs
     Nothing -> pure ()
 processEvent _ n = do
   putStrLn $ "Seen " <> show n

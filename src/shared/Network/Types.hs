@@ -6,7 +6,7 @@ import GHC.Generics(Generic)
 
 data LoginStatus =
     LoginSuccess Int -- ^ successful login with the entity ID 
-  | LoginFail
+  | LoginFail Text -- ^ failed login with error message
   deriving (Show, Generic)
 
 newtype LoginName = LoginName Text

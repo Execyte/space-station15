@@ -40,6 +40,7 @@ import Game.Client.Renderer qualified as Renderer
 import Game.Client.Renderer (Renderer(..), Vertex(..))
 import Im qualified
 
+-- TODO: move everything out of Main eventually
 -- TODO: implement tile layers
 type Tile = Int
 

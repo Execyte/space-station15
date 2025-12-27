@@ -4,6 +4,7 @@ import Game.Components
 import GHC.Generics(Generic)
 import Codec.Serialise(Serialise)
 import Types
+import Apecs
 
 data ComponentSnapshot = ComponentSnapshot
   { pos :: Maybe Position } deriving (Show, Eq, Generic)
@@ -17,3 +18,4 @@ newtype WorldSnapshot = WorldSnapshot [EntitySnapshot]
 instance Serialise ComponentSnapshot
 instance Serialise WorldSnapshot
 instance Serialise EntitySnapshot
+
